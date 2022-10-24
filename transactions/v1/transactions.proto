@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package transactions.v1;
+
+option go_package = "xsyn-transactions/gen/transactions/v1;transactionsv1";
+
+message Account {
+  string id = 1;
+  string user_id = 2;
+  Ledger ledger = 3;
+  AccountCode code = 4;
+  string debits_posted = 5;
+  string credits_posted = 6;
+  string balance = 8;
+  int64 created_at = 9;
+}
+
+message MigrationTransfer {
+  string id = 1;
+  string credit_user_id = 2;
+  string credit_account_id = 3;
+  string debit_user_id = 4;
+  string debit_account_id = 5;
+  string amount = 6;
+  Ledger ledger = 7;
+  TransferCode code = 8;
+  int64 timestamp = 9;
+}
+
+message CompletedTransfer {
+  string id = 1;
+  string credit_user_id = 2;
+  string credit_account_id = 3;
+  string debit_user_id = 4;
+  string debit_account_id = 5;
+  string amount = 6;
+  Ledger ledger = 7;
+  TransferCode code = 8;
+  int64 timestamp = 9;
+}
+
+enum TransferCode {
+  TransferCodeUnused = 0;
+  TransferCodeUnknown = 1;
+  TransferCodeLegacy = 2;
+  TransferCodeDeposit = 3;
+  TransferCodeDepositRefund = 4;
+  TransferCodeWithdraw = 5;
+  TransferCodeWithdrawRefund = 6;
+  TransferCodeSupsPurchase = 7;
+  TransferCodeSupsPurchaseRefund = 8;
+  TransferCodeStorePurchase = 9;
+  TransferCodeStorePurchaseRefund = 10;
+  TransferCodeAssetTransferFee = 11;
+  TransferCodeAssetTransferFeeRefund = 12;
+  TransferCodeSupremacyStorePurchase = 13;
+  TransferCodeSupremacyStoreRefund = 14;
+  TransferCodeSupremacyMarketplace = 15;
+  TransferCodeSupremacySyndicate = 16;
+  TransferCodeSupremacySyndicateRefund = 17;
+  TransferCodeSupremacyBattle = 18;
+  TransferCodeSupremacyBattleRefund = 19;
+  TransferCodeSupremacyBattleReward = 20;
+  TransferCodeSupremacyBattleLobbyFee = 21;
+  TransferCodeSupremacyBattleLobbyFeeRefund = 22;
+  TransferCodeSupremacyBattleLobbyJoin = 23;
+  TransferCodeSupremacyBattleLobbyJoinRefund = 24;
+  TransferCodeCoupon = 25;
+  TransferCodeSupremacyMarketplaceBuy = 26;
+  TransferCodeSupremacyMarketplaceBuyRefund = 27;
+  TransferCodeSupremacyMarketplaceBid = 28;
+  TransferCodeSupremacyMarketplaceBidRefund = 29;
+  TransferCodeSupremacyRepair = 30;
+  TransferCodeSupremacyRepairRefund = 31;
+  TransferCodeSupremacyNotification = 32;
+  TransferCodeSupremacyNotificationRefund = 33;
+  TransferCodeSupremacyMarketplaceFee = 34;
+  TransferCodeSupremacyMarketplaceFeeRefund = 35;
+}
+
+enum Ledger {
+  Legacy = 0;
+  SUPS = 1;
+}
+
+enum AccountCode {
+  AccountUnknown = 0;
+  AccountReserve = 1;
+  AccountSystem = 2;
+  AccountUser = 3;
+  AccountBot = 4;
+}
+
+message AccountCreateRequest {
+}
+
+message AccountCreateResponse {
+  Account account = 1;
+}
+
+message AccountGetViaIDRequest {
+  string account_id = 1;
+}
+
+message AccountGetViaIDResponse {
+  Account account = 1;
+}
+
+message AccountGetViaUserRequest {
+  string user_id = 1;
+  int32 ledger = 3;
+}
+
+message AccountGetViaUserResponse {
+  Account account = 1;
+}
+
+message AccountsUserRequest {
+  string user_id = 1;
+}
+
+message AccountsUserResponse {
+  Account account = 1;
+}
+
+message GetBalanceRequest {
+  string user_id = 1;
+  int32 ledger = 3;
+}
+
+message GetBalanceResponse {
+  string balance = 1;
+}
+
+service Accounts {
+  rpc AccountCreate(AccountCreateRequest) returns (AccountCreateResponse);
+  rpc AccountGetViaID(AccountGetViaIDRequest) returns (AccountGetViaIDResponse);
+  rpc AccountGetViaUser(AccountGetViaIDRequest) returns (AccountGetViaIDResponse);
+  rpc AccountsUser(AccountsUserRequest) returns (AccountsUserResponse);
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+}
+
+message TransactWithIDRequest {
+  string credit_user_id = 1;
+  string debit_user_id = 2;
+  TransferCode code = 3;
+  Ledger ledger = 4;
+  string amount = 5;
+  string tx_id = 6;
+}
+
+message TransactWithIDResponse {
+  CompletedTransfer transfer = 1;
+}
+
+message TransactRequest {
+  string credit_user_id = 1;
+  string debit_user_id = 2;
+  TransferCode code = 3;
+  Ledger ledger = 4;
+  string amount = 5;
+}
+
+message TransactResponse {
+  CompletedTransfer transfer = 1;
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
+
+service Transactor {
+  rpc TransactWithID(TransactWithIDRequest) returns (TransactWithIDResponse);
+  rpc Transact(TransactRequest) returns (TransactResponse);
+  rpc Hello(HelloRequest) returns (HelloResponse);
+}
