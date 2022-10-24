@@ -87,4 +87,4 @@ migrate-from-old:
 
 .PHONY: serve
 serve:
-	go run ./cmd/server/main.go -serve
+	${BIN}/air -c ./.air.toml
