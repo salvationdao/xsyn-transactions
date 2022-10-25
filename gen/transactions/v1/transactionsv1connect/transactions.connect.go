@@ -29,9 +29,7 @@ const (
 
 // AccountsClient is a client for the transactions.v1.Accounts service.
 type AccountsClient interface {
-	AccountCreate(context.Context, *connect_go.Request[v1.AccountCreateRequest]) (*connect_go.Response[v1.AccountCreateResponse], error)
-	AccountGetViaID(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error)
-	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error)
+	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error)
 	AccountsUser(context.Context, *connect_go.Request[v1.AccountsUserRequest]) (*connect_go.Response[v1.AccountsUserResponse], error)
 	GetBalance(context.Context, *connect_go.Request[v1.GetBalanceRequest]) (*connect_go.Response[v1.GetBalanceResponse], error)
 }
@@ -46,17 +44,7 @@ type AccountsClient interface {
 func NewAccountsClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) AccountsClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &accountsClient{
-		accountCreate: connect_go.NewClient[v1.AccountCreateRequest, v1.AccountCreateResponse](
-			httpClient,
-			baseURL+"/transactions.v1.Accounts/AccountCreate",
-			opts...,
-		),
-		accountGetViaID: connect_go.NewClient[v1.AccountGetViaIDRequest, v1.AccountGetViaIDResponse](
-			httpClient,
-			baseURL+"/transactions.v1.Accounts/AccountGetViaID",
-			opts...,
-		),
-		accountGetViaUser: connect_go.NewClient[v1.AccountGetViaIDRequest, v1.AccountGetViaIDResponse](
+		accountGetViaUser: connect_go.NewClient[v1.AccountGetViaUserRequest, v1.AccountGetViaUserResponse](
 			httpClient,
 			baseURL+"/transactions.v1.Accounts/AccountGetViaUser",
 			opts...,
@@ -76,25 +64,13 @@ func NewAccountsClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 
 // accountsClient implements AccountsClient.
 type accountsClient struct {
-	accountCreate     *connect_go.Client[v1.AccountCreateRequest, v1.AccountCreateResponse]
-	accountGetViaID   *connect_go.Client[v1.AccountGetViaIDRequest, v1.AccountGetViaIDResponse]
-	accountGetViaUser *connect_go.Client[v1.AccountGetViaIDRequest, v1.AccountGetViaIDResponse]
+	accountGetViaUser *connect_go.Client[v1.AccountGetViaUserRequest, v1.AccountGetViaUserResponse]
 	accountsUser      *connect_go.Client[v1.AccountsUserRequest, v1.AccountsUserResponse]
 	getBalance        *connect_go.Client[v1.GetBalanceRequest, v1.GetBalanceResponse]
 }
 
-// AccountCreate calls transactions.v1.Accounts.AccountCreate.
-func (c *accountsClient) AccountCreate(ctx context.Context, req *connect_go.Request[v1.AccountCreateRequest]) (*connect_go.Response[v1.AccountCreateResponse], error) {
-	return c.accountCreate.CallUnary(ctx, req)
-}
-
-// AccountGetViaID calls transactions.v1.Accounts.AccountGetViaID.
-func (c *accountsClient) AccountGetViaID(ctx context.Context, req *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error) {
-	return c.accountGetViaID.CallUnary(ctx, req)
-}
-
 // AccountGetViaUser calls transactions.v1.Accounts.AccountGetViaUser.
-func (c *accountsClient) AccountGetViaUser(ctx context.Context, req *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error) {
+func (c *accountsClient) AccountGetViaUser(ctx context.Context, req *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error) {
 	return c.accountGetViaUser.CallUnary(ctx, req)
 }
 
@@ -110,9 +86,7 @@ func (c *accountsClient) GetBalance(ctx context.Context, req *connect_go.Request
 
 // AccountsHandler is an implementation of the transactions.v1.Accounts service.
 type AccountsHandler interface {
-	AccountCreate(context.Context, *connect_go.Request[v1.AccountCreateRequest]) (*connect_go.Response[v1.AccountCreateResponse], error)
-	AccountGetViaID(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error)
-	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error)
+	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error)
 	AccountsUser(context.Context, *connect_go.Request[v1.AccountsUserRequest]) (*connect_go.Response[v1.AccountsUserResponse], error)
 	GetBalance(context.Context, *connect_go.Request[v1.GetBalanceRequest]) (*connect_go.Response[v1.GetBalanceResponse], error)
 }
@@ -124,16 +98,6 @@ type AccountsHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAccountsHandler(svc AccountsHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/transactions.v1.Accounts/AccountCreate", connect_go.NewUnaryHandler(
-		"/transactions.v1.Accounts/AccountCreate",
-		svc.AccountCreate,
-		opts...,
-	))
-	mux.Handle("/transactions.v1.Accounts/AccountGetViaID", connect_go.NewUnaryHandler(
-		"/transactions.v1.Accounts/AccountGetViaID",
-		svc.AccountGetViaID,
-		opts...,
-	))
 	mux.Handle("/transactions.v1.Accounts/AccountGetViaUser", connect_go.NewUnaryHandler(
 		"/transactions.v1.Accounts/AccountGetViaUser",
 		svc.AccountGetViaUser,
@@ -155,15 +119,7 @@ func NewAccountsHandler(svc AccountsHandler, opts ...connect_go.HandlerOption) (
 // UnimplementedAccountsHandler returns CodeUnimplemented from all methods.
 type UnimplementedAccountsHandler struct{}
 
-func (UnimplementedAccountsHandler) AccountCreate(context.Context, *connect_go.Request[v1.AccountCreateRequest]) (*connect_go.Response[v1.AccountCreateResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.AccountCreate is not implemented"))
-}
-
-func (UnimplementedAccountsHandler) AccountGetViaID(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.AccountGetViaID is not implemented"))
-}
-
-func (UnimplementedAccountsHandler) AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaIDRequest]) (*connect_go.Response[v1.AccountGetViaIDResponse], error) {
+func (UnimplementedAccountsHandler) AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.AccountGetViaUser is not implemented"))
 }
 
@@ -180,6 +136,7 @@ type TransactorClient interface {
 	TransactWithID(context.Context, *connect_go.Request[v1.TransactWithIDRequest]) (*connect_go.Response[v1.TransactWithIDResponse], error)
 	Transact(context.Context, *connect_go.Request[v1.TransactRequest]) (*connect_go.Response[v1.TransactResponse], error)
 	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
+	TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest]) (*connect_go.ServerStreamForClient[v1.TransferCompleteSubscribeResponse], error)
 }
 
 // NewTransactorClient constructs a client for the transactions.v1.Transactor service. By default,
@@ -207,14 +164,20 @@ func NewTransactorClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 			baseURL+"/transactions.v1.Transactor/Hello",
 			opts...,
 		),
+		transferCompleteSubscribe: connect_go.NewClient[v1.TransferCompleteSubscribeRequest, v1.TransferCompleteSubscribeResponse](
+			httpClient,
+			baseURL+"/transactions.v1.Transactor/TransferCompleteSubscribe",
+			opts...,
+		),
 	}
 }
 
 // transactorClient implements TransactorClient.
 type transactorClient struct {
-	transactWithID *connect_go.Client[v1.TransactWithIDRequest, v1.TransactWithIDResponse]
-	transact       *connect_go.Client[v1.TransactRequest, v1.TransactResponse]
-	hello          *connect_go.Client[v1.HelloRequest, v1.HelloResponse]
+	transactWithID            *connect_go.Client[v1.TransactWithIDRequest, v1.TransactWithIDResponse]
+	transact                  *connect_go.Client[v1.TransactRequest, v1.TransactResponse]
+	hello                     *connect_go.Client[v1.HelloRequest, v1.HelloResponse]
+	transferCompleteSubscribe *connect_go.Client[v1.TransferCompleteSubscribeRequest, v1.TransferCompleteSubscribeResponse]
 }
 
 // TransactWithID calls transactions.v1.Transactor.TransactWithID.
@@ -232,11 +195,17 @@ func (c *transactorClient) Hello(ctx context.Context, req *connect_go.Request[v1
 	return c.hello.CallUnary(ctx, req)
 }
 
+// TransferCompleteSubscribe calls transactions.v1.Transactor.TransferCompleteSubscribe.
+func (c *transactorClient) TransferCompleteSubscribe(ctx context.Context, req *connect_go.Request[v1.TransferCompleteSubscribeRequest]) (*connect_go.ServerStreamForClient[v1.TransferCompleteSubscribeResponse], error) {
+	return c.transferCompleteSubscribe.CallServerStream(ctx, req)
+}
+
 // TransactorHandler is an implementation of the transactions.v1.Transactor service.
 type TransactorHandler interface {
 	TransactWithID(context.Context, *connect_go.Request[v1.TransactWithIDRequest]) (*connect_go.Response[v1.TransactWithIDResponse], error)
 	Transact(context.Context, *connect_go.Request[v1.TransactRequest]) (*connect_go.Response[v1.TransactResponse], error)
 	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
+	TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest], *connect_go.ServerStream[v1.TransferCompleteSubscribeResponse]) error
 }
 
 // NewTransactorHandler builds an HTTP handler from the service implementation. It returns the path
@@ -261,6 +230,11 @@ func NewTransactorHandler(svc TransactorHandler, opts ...connect_go.HandlerOptio
 		svc.Hello,
 		opts...,
 	))
+	mux.Handle("/transactions.v1.Transactor/TransferCompleteSubscribe", connect_go.NewServerStreamHandler(
+		"/transactions.v1.Transactor/TransferCompleteSubscribe",
+		svc.TransferCompleteSubscribe,
+		opts...,
+	))
 	return "/transactions.v1.Transactor/", mux
 }
 
@@ -277,4 +251,8 @@ func (UnimplementedTransactorHandler) Transact(context.Context, *connect_go.Requ
 
 func (UnimplementedTransactorHandler) Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Transactor.Hello is not implemented"))
+}
+
+func (UnimplementedTransactorHandler) TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest], *connect_go.ServerStream[v1.TransferCompleteSubscribeResponse]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Transactor.TransferCompleteSubscribe is not implemented"))
 }

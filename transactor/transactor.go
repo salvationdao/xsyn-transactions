@@ -1,8 +1,10 @@
 package transactor
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	connect_go "github.com/bufbuild/connect-go"
 	"github.com/rs/zerolog"
 	"github.com/sasha-s/go-deadlock"
 	transactionsv1 "xsyn-transactions/gen/transactions/v1"
@@ -20,6 +22,9 @@ type Transactor struct {
 	runner                chan func() error
 	balanceUpdateFunction func(account *transactionsv1.Account, transaction *transactionsv1.CompletedTransfer)
 	deadlock.RWMutex
+
+	broadcaster   chan *transactionsv1.TransferCompleteSubscribeResponse
+	ClientStreams map[string]connect_go.StreamingHandlerConn
 }
 
 type NewTransactorOpts struct {
@@ -32,9 +37,11 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 	var err error
 
 	txr := &Transactor{
-		m:       make(map[string]map[transactionsv1.Ledger]*transactionsv1.Account),
-		runner:  make(chan func() error, 100),
-		RWMutex: deadlock.RWMutex{},
+		m:             make(map[string]map[transactionsv1.Ledger]*transactionsv1.Account),
+		runner:        make(chan func() error, 100),
+		broadcaster:   make(chan *transactionsv1.TransferCompleteSubscribeResponse, 1000),
+		ClientStreams: make(map[string]connect_go.StreamingHandlerConn),
+		RWMutex:       deadlock.RWMutex{},
 	}
 
 	if opts == nil {
@@ -64,7 +71,7 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 
 	txr.Lock()
 	for _, account := range accounts {
-		ledger := transactionsv1.Ledger(account.Ledger)
+		ledger := account.Ledger
 		// create user ledger account map if not exist
 		if _, ok := txr.m[account.UserId]; !ok {
 			txr.m[account.UserId] = make(map[transactionsv1.Ledger]*transactionsv1.Account)
@@ -75,6 +82,8 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 	txr.Unlock()
 
 	go txr.run()
+	go txr.broadcast()
+
 	txr.log.Info().Msg("successfully initiated transactor")
 	return txr, nil
 }
@@ -92,4 +101,42 @@ func (t *Transactor) run() {
 			}
 		}
 	}
+}
+
+func (t *Transactor) broadcast() {
+	fmt.Println("here1")
+	for res := range t.broadcaster {
+		fmt.Println("here2")
+		t.RLock()
+		for id, conn := range t.ClientStreams {
+			fmt.Println("here3")
+			err := conn.Send(res)
+			if err != nil {
+				delete(t.ClientStreams, id)
+				t.log.Info().Err(err).Msg("failed to send")
+				return
+			}
+		}
+		t.RUnlock()
+	}
+}
+
+func (t *Transactor) TransferCompleteSubscribe(ctx context.Context, req *connect_go.Request[transactionsv1.TransferCompleteSubscribeRequest], resp *connect_go.ServerStream[transactionsv1.TransferCompleteSubscribeResponse]) error {
+	fmt.Println("here4")
+	t.Lock()
+	t.ClientStreams[req.Msg.Id] = resp.Conn()
+	t.Unlock()
+	fmt.Println("here5")
+	//resp.Conn()
+	//c := resp.Conn()
+	//
+	//c.Send(&transactionsv1.TransferCompleteResponse{})
+	//
+	////err := resp.Send(&transactionsv1.TransferCompleteResponse{})
+	////if err != nil {
+	////	return err
+	////}
+	select {}
+	fmt.Println("here6")
+	return nil
 }

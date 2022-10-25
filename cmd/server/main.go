@@ -95,6 +95,8 @@ func RunService(c *cli.Context) error {
 	mux := http.NewServeMux()
 	path, handler := transactionsv1connect.NewTransactorHandler(newTransactor)
 	mux.Handle(path, handler)
+	path, handler = transactionsv1connect.NewAccountsHandler(newTransactor)
+	mux.Handle(path, handler)
 
 	hostAddr := fmt.Sprintf("localhost:%d", apiPort)
 

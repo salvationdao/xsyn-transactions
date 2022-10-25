@@ -40,46 +40,46 @@ message CompletedTransfer {
 }
 
 enum TransferCode {
-  TransferCodeUnused = 0;
-  TransferCodeUnknown = 1;
-  TransferCodeLegacy = 2;
-  TransferCodeDeposit = 3;
-  TransferCodeDepositRefund = 4;
-  TransferCodeWithdraw = 5;
-  TransferCodeWithdrawRefund = 6;
-  TransferCodeSupsPurchase = 7;
-  TransferCodeSupsPurchaseRefund = 8;
-  TransferCodeStorePurchase = 9;
-  TransferCodeStorePurchaseRefund = 10;
-  TransferCodeAssetTransferFee = 11;
-  TransferCodeAssetTransferFeeRefund = 12;
-  TransferCodeSupremacyStorePurchase = 13;
-  TransferCodeSupremacyStoreRefund = 14;
-  TransferCodeSupremacyMarketplace = 15;
-  TransferCodeSupremacySyndicate = 16;
-  TransferCodeSupremacySyndicateRefund = 17;
-  TransferCodeSupremacyBattle = 18;
-  TransferCodeSupremacyBattleRefund = 19;
-  TransferCodeSupremacyBattleReward = 20;
-  TransferCodeSupremacyBattleLobbyFee = 21;
-  TransferCodeSupremacyBattleLobbyFeeRefund = 22;
-  TransferCodeSupremacyBattleLobbyJoin = 23;
-  TransferCodeSupremacyBattleLobbyJoinRefund = 24;
-  TransferCodeCoupon = 25;
-  TransferCodeSupremacyMarketplaceBuy = 26;
-  TransferCodeSupremacyMarketplaceBuyRefund = 27;
-  TransferCodeSupremacyMarketplaceBid = 28;
-  TransferCodeSupremacyMarketplaceBidRefund = 29;
-  TransferCodeSupremacyRepair = 30;
-  TransferCodeSupremacyRepairRefund = 31;
-  TransferCodeSupremacyNotification = 32;
-  TransferCodeSupremacyNotificationRefund = 33;
-  TransferCodeSupremacyMarketplaceFee = 34;
-  TransferCodeSupremacyMarketplaceFeeRefund = 35;
+  UnusedTransferCode = 0;
+  Unknown = 1;
+  Legacy = 2;
+  Deposit = 3;
+  DepositRefund = 4;
+  Withdraw = 5;
+  WithdrawRefund = 6;
+  SupsPurchase = 7;
+  SupsPurchaseRefund = 8;
+  StorePurchase = 9;
+  StorePurchaseRefund = 10;
+  AssetTransferFee = 11;
+  AssetTransferFeeRefund = 12;
+  SupremacyStorePurchase = 13;
+  SupremacyStoreRefund = 14;
+  SupremacyMarketplace = 15;
+  SupremacySyndicate = 16;
+  SupremacySyndicateRefund = 17;
+  SupremacyBattle = 18;
+  SupremacyBattleRefund = 19;
+  SupremacyBattleReward = 20;
+  SupremacyBattleLobbyFee = 21;
+  SupremacyBattleLobbyFeeRefund = 22;
+  SupremacyBattleLobbyJoin = 23;
+  SupremacyBattleLobbyJoinRefund = 24;
+  Coupon = 25;
+  SupremacyMarketplaceBuy = 26;
+  SupremacyMarketplaceBuyRefund = 27;
+  SupremacyMarketplaceBid = 28;
+  SupremacyMarketplaceBidRefund = 29;
+  SupremacyRepair = 30;
+  SupremacyRepairRefund = 31;
+  SupremacyNotification = 32;
+  SupremacyNotificationRefund = 33;
+  SupremacyMarketplaceFee = 34;
+  SupremacyMarketplaceFeeRefund = 35;
 }
 
 enum Ledger {
-  Legacy = 0;
+  UnusedLedgerCode = 0;
   SUPS = 1;
 }
 
@@ -91,24 +91,10 @@ enum AccountCode {
   AccountBot = 4;
 }
 
-message AccountCreateRequest {
-}
-
-message AccountCreateResponse {
-  Account account = 1;
-}
-
-message AccountGetViaIDRequest {
-  string account_id = 1;
-}
-
-message AccountGetViaIDResponse {
-  Account account = 1;
-}
-
 message AccountGetViaUserRequest {
   string user_id = 1;
-  int32 ledger = 3;
+  Ledger ledger = 2;
+  bool create_if_not_exists = 3;
 }
 
 message AccountGetViaUserResponse {
@@ -117,15 +103,17 @@ message AccountGetViaUserResponse {
 
 message AccountsUserRequest {
   string user_id = 1;
+  repeated Ledger create_if_not_exist = 2;
 }
 
 message AccountsUserResponse {
-  Account account = 1;
+  repeated  Account accounts = 1;
 }
 
 message GetBalanceRequest {
   string user_id = 1;
-  int32 ledger = 3;
+  Ledger ledger = 2;
+  bool create_if_not_exists = 3;
 }
 
 message GetBalanceResponse {
@@ -133,9 +121,7 @@ message GetBalanceResponse {
 }
 
 service Accounts {
-  rpc AccountCreate(AccountCreateRequest) returns (AccountCreateResponse);
-  rpc AccountGetViaID(AccountGetViaIDRequest) returns (AccountGetViaIDResponse);
-  rpc AccountGetViaUser(AccountGetViaIDRequest) returns (AccountGetViaIDResponse);
+  rpc AccountGetViaUser(AccountGetViaUserRequest) returns (AccountGetViaUserResponse);
   rpc AccountsUser(AccountsUserRequest) returns (AccountsUserResponse);
   rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
 }
@@ -173,8 +159,18 @@ message HelloResponse {
   string message = 1;
 }
 
+message TransferCompleteSubscribeRequest {
+    string id = 1;
+}
+
+message TransferCompleteSubscribeResponse {
+  Account account = 1;
+  CompletedTransfer transaction = 2;
+}
+
 service Transactor {
   rpc TransactWithID(TransactWithIDRequest) returns (TransactWithIDResponse);
   rpc Transact(TransactRequest) returns (TransactResponse);
   rpc Hello(HelloRequest) returns (HelloResponse);
+  rpc TransferCompleteSubscribe (TransferCompleteSubscribeRequest) returns (stream TransferCompleteSubscribeResponse) {}
 }

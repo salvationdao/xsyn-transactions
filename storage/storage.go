@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"net/url"
 	"xsyn-transactions/boiler"
 	transactionsv1 "xsyn-transactions/gen/transactions/v1"
@@ -97,6 +98,7 @@ func (s *Storage) GetAllUserAccounts(userID string) ([]*transactionsv1.Account, 
 		s.log.Error().Err(err).Msg("unable to retrieve user account balances")
 		return nil, err
 	}
+
 	for _, acc := range accounts {
 		results = append(results, &transactionsv1.Account{
 			Id:            acc.ID,
@@ -111,4 +113,18 @@ func (s *Storage) GetAllUserAccounts(userID string) ([]*transactionsv1.Account, 
 	}
 
 	return results, nil
+}
+
+func (s *Storage) CreateAccount(userId string, code transactionsv1.AccountCode, ledger transactionsv1.Ledger) error {
+	newAccount := &boiler.Account{
+		XsynUserID:  userId,
+		AccountCode: int(code),
+		Ledger:      int(ledger),
+	}
+	err := newAccount.Insert(s, boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

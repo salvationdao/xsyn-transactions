@@ -2,6 +2,7 @@ package transactor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/gofrs/uuid"
@@ -23,7 +24,18 @@ func (t *Transactor) Transact(ctx context.Context, req *connect_go.Request[trans
 
 	creditorAccount, err := t.get(req.Msg.CreditUserId, req.Msg.Ledger)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		if errors.Is(err, ErrUnableToFindAccount) {
+			err = t.Storage.CreateAccount(req.Msg.CreditUserId, transactionsv1.AccountCode_AccountUser, req.Msg.Ledger)
+			if err != nil {
+				return nil, connect_go.NewError(connect_go.CodeInternal, err)
+			}
+			creditorAccount, err = t.get(req.Msg.CreditUserId, req.Msg.Ledger)
+			if err != nil {
+				return nil, connect_go.NewError(connect_go.CodeInternal, err)
+			}
+		} else {
+			return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		}
 	}
 	debitorAccount, err := t.get(req.Msg.DebitUserId, req.Msg.Ledger)
 	if err != nil {
@@ -139,7 +151,7 @@ func (t *Transactor) transact(nt *NewTransaction) (*transactionsv1.CompletedTran
 			Timestamp:       tx.CreatedAt.Unix(),
 		}
 
-		//t.balanceUpdate(completedTx)
+		t.balanceUpdate(completedTx)
 		wg.Done()
 		return nil
 	}

@@ -1,18 +1,11 @@
 package transactor
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/shopspring/decimal"
 	transactionsv1 "xsyn-transactions/gen/transactions/v1"
 )
-
-func (t *Transactor) GetBalance(userID string, ledger transactionsv1.Ledger) string {
-	account, err := t.get(userID, ledger)
-	if err != nil {
-		return "0"
-	}
-
-	return account.Balance
-}
 
 func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
 	amount, err := decimal.NewFromString(tx.Amount)
@@ -32,9 +25,13 @@ func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
 		debitAccount.Balance = balance.Sub(amount).String()
 		t.put(debitAccount)
 		t.balanceUpdateFunction(debitAccount, tx)
+		t.broadcaster <- &transactionsv1.TransferCompleteSubscribeResponse{
+			Account:     debitAccount,
+			Transaction: tx,
+		}
 	}
 
-	creditAccount, err := t.get(tx.CreditAccountId, tx.Ledger)
+	creditAccount, err := t.get(tx.CreditUserId, tx.Ledger)
 	if err != nil {
 		t.log.Error().Err(err).Interface("tx", tx).Msg("error updating balance")
 	} else {
@@ -46,6 +43,10 @@ func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
 		creditAccount.Balance = balance.Add(amount).String()
 		t.put(creditAccount)
 		t.balanceUpdateFunction(creditAccount, tx)
+		t.broadcaster <- &transactionsv1.TransferCompleteSubscribeResponse{
+			Account:     creditAccount,
+			Transaction: tx,
+		}
 	}
 }
 
@@ -66,6 +67,9 @@ func (t *Transactor) getAndSet(userID string, ledger transactionsv1.Ledger) (*tr
 	if account, ok := t.m[userID][ledger]; ok {
 		return account, nil
 	}
+
+	jsn, _ := json.Marshal(accounts)
+	fmt.Println(string(jsn))
 
 	return nil, ErrUnableToFindAccount
 }
