@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/vincentwillats/xsyn-transactions
+name: buf.build/ninja-syndicate/xsyn-transactions
 breaking:
   use:
     - FILE
