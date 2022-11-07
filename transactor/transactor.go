@@ -16,11 +16,10 @@ var ErrQueueFull = fmt.Errorf("transaction queue is full")
 var ErrUnableToFindAccount = fmt.Errorf("unable to find account")
 
 type Transactor struct {
-	Storage               *storage.Storage
-	log                   *zerolog.Logger
-	m                     map[string]map[transactionsv1.Ledger]*transactionsv1.Account // map[user_id]map[currency]account
-	runner                chan func() error
-	balanceUpdateFunction func(account *transactionsv1.Account, transaction *transactionsv1.CompletedTransfer)
+	Storage *storage.Storage
+	log     *zerolog.Logger
+	m       map[string]map[transactionsv1.Ledger]*transactionsv1.Account // map[user_id]map[currency]account
+	runner  chan func() error
 	deadlock.RWMutex
 
 	broadcaster   chan *transactionsv1.TransferCompleteSubscribeResponse
@@ -28,9 +27,8 @@ type Transactor struct {
 }
 
 type NewTransactorOpts struct {
-	StorageOpts           *storage.Opts
-	Log                   *zerolog.Logger
-	BalanceUpdateFunction func(account *transactionsv1.Account, transaction *transactionsv1.CompletedTransfer)
+	StorageOpts *storage.Opts
+	Log         *zerolog.Logger
 }
 
 func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
@@ -53,14 +51,6 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 	txr.Storage, err = storage.NewStorage(opts.StorageOpts)
 	if err != nil {
 		return nil, err
-	}
-
-	txr.balanceUpdateFunction = func(account *transactionsv1.Account, transaction *transactionsv1.CompletedTransfer) {
-		go func() {
-			if opts != nil && opts.BalanceUpdateFunction != nil {
-				opts.BalanceUpdateFunction(account, transaction)
-			}
-		}()
 	}
 
 	accounts, err := txr.Storage.GetAllAccounts()
@@ -104,16 +94,13 @@ func (t *Transactor) run() {
 }
 
 func (t *Transactor) broadcast() {
-	fmt.Println("here1")
 	for res := range t.broadcaster {
-		fmt.Println("here2")
 		t.RLock()
 		for id, conn := range t.ClientStreams {
-			fmt.Println("here3")
 			err := conn.Send(res)
 			if err != nil {
 				delete(t.ClientStreams, id)
-				t.log.Info().Err(err).Msg("failed to send")
+				t.log.Error().Err(err).Msg("failed to send")
 				return
 			}
 		}
@@ -121,22 +108,23 @@ func (t *Transactor) broadcast() {
 	}
 }
 
-func (t *Transactor) TransferCompleteSubscribe(ctx context.Context, req *connect_go.Request[transactionsv1.TransferCompleteSubscribeRequest], resp *connect_go.ServerStream[transactionsv1.TransferCompleteSubscribeResponse]) error {
-	fmt.Println("here4")
+func (t *Transactor) TransferCompleteSubscribe(
+	ctx context.Context,
+	req *connect_go.Request[transactionsv1.TransferCompleteSubscribeRequest],
+	resp *connect_go.ServerStream[transactionsv1.TransferCompleteSubscribeResponse],
+) error {
 	t.Lock()
 	t.ClientStreams[req.Msg.Id] = resp.Conn()
 	t.Unlock()
-	fmt.Println("here5")
-	//resp.Conn()
-	//c := resp.Conn()
-	//
-	//c.Send(&transactionsv1.TransferCompleteResponse{})
-	//
-	////err := resp.Send(&transactionsv1.TransferCompleteResponse{})
-	////if err != nil {
-	////	return err
-	////}
-	select {}
-	fmt.Println("here6")
-	return nil
+
+	for {
+		select {
+		case <-ctx.Done():
+			t.Lock()
+			delete(t.ClientStreams, req.Msg.Id)
+			t.log.Debug().Str("client id", req.Msg.Id).Msg("removing client")
+			t.Unlock()
+			return nil
+		}
+	}
 }

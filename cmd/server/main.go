@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"net/http"
@@ -58,7 +57,6 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal().Err(err).Msg("run")
 	}
-
 }
 
 func RunService(c *cli.Context) error {
@@ -85,7 +83,6 @@ func RunService(c *cli.Context) error {
 				Log:            &log.Logger,
 			},
 			Log: &log.Logger,
-			//BalanceUpdateFunction: nil,
 		},
 	)
 	if err != nil {

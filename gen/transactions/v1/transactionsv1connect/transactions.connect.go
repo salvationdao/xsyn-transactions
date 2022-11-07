@@ -135,7 +135,6 @@ func (UnimplementedAccountsHandler) GetBalance(context.Context, *connect_go.Requ
 type TransactorClient interface {
 	TransactWithID(context.Context, *connect_go.Request[v1.TransactWithIDRequest]) (*connect_go.Response[v1.TransactWithIDResponse], error)
 	Transact(context.Context, *connect_go.Request[v1.TransactRequest]) (*connect_go.Response[v1.TransactResponse], error)
-	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
 	TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest]) (*connect_go.ServerStreamForClient[v1.TransferCompleteSubscribeResponse], error)
 }
 
@@ -159,11 +158,6 @@ func NewTransactorClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 			baseURL+"/transactions.v1.Transactor/Transact",
 			opts...,
 		),
-		hello: connect_go.NewClient[v1.HelloRequest, v1.HelloResponse](
-			httpClient,
-			baseURL+"/transactions.v1.Transactor/Hello",
-			opts...,
-		),
 		transferCompleteSubscribe: connect_go.NewClient[v1.TransferCompleteSubscribeRequest, v1.TransferCompleteSubscribeResponse](
 			httpClient,
 			baseURL+"/transactions.v1.Transactor/TransferCompleteSubscribe",
@@ -176,7 +170,6 @@ func NewTransactorClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 type transactorClient struct {
 	transactWithID            *connect_go.Client[v1.TransactWithIDRequest, v1.TransactWithIDResponse]
 	transact                  *connect_go.Client[v1.TransactRequest, v1.TransactResponse]
-	hello                     *connect_go.Client[v1.HelloRequest, v1.HelloResponse]
 	transferCompleteSubscribe *connect_go.Client[v1.TransferCompleteSubscribeRequest, v1.TransferCompleteSubscribeResponse]
 }
 
@@ -190,11 +183,6 @@ func (c *transactorClient) Transact(ctx context.Context, req *connect_go.Request
 	return c.transact.CallUnary(ctx, req)
 }
 
-// Hello calls transactions.v1.Transactor.Hello.
-func (c *transactorClient) Hello(ctx context.Context, req *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error) {
-	return c.hello.CallUnary(ctx, req)
-}
-
 // TransferCompleteSubscribe calls transactions.v1.Transactor.TransferCompleteSubscribe.
 func (c *transactorClient) TransferCompleteSubscribe(ctx context.Context, req *connect_go.Request[v1.TransferCompleteSubscribeRequest]) (*connect_go.ServerStreamForClient[v1.TransferCompleteSubscribeResponse], error) {
 	return c.transferCompleteSubscribe.CallServerStream(ctx, req)
@@ -204,7 +192,6 @@ func (c *transactorClient) TransferCompleteSubscribe(ctx context.Context, req *c
 type TransactorHandler interface {
 	TransactWithID(context.Context, *connect_go.Request[v1.TransactWithIDRequest]) (*connect_go.Response[v1.TransactWithIDResponse], error)
 	Transact(context.Context, *connect_go.Request[v1.TransactRequest]) (*connect_go.Response[v1.TransactResponse], error)
-	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
 	TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest], *connect_go.ServerStream[v1.TransferCompleteSubscribeResponse]) error
 }
 
@@ -225,11 +212,6 @@ func NewTransactorHandler(svc TransactorHandler, opts ...connect_go.HandlerOptio
 		svc.Transact,
 		opts...,
 	))
-	mux.Handle("/transactions.v1.Transactor/Hello", connect_go.NewUnaryHandler(
-		"/transactions.v1.Transactor/Hello",
-		svc.Hello,
-		opts...,
-	))
 	mux.Handle("/transactions.v1.Transactor/TransferCompleteSubscribe", connect_go.NewServerStreamHandler(
 		"/transactions.v1.Transactor/TransferCompleteSubscribe",
 		svc.TransferCompleteSubscribe,
@@ -247,10 +229,6 @@ func (UnimplementedTransactorHandler) TransactWithID(context.Context, *connect_g
 
 func (UnimplementedTransactorHandler) Transact(context.Context, *connect_go.Request[v1.TransactRequest]) (*connect_go.Response[v1.TransactResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Transactor.Transact is not implemented"))
-}
-
-func (UnimplementedTransactorHandler) Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Transactor.Hello is not implemented"))
 }
 
 func (UnimplementedTransactorHandler) TransferCompleteSubscribe(context.Context, *connect_go.Request[v1.TransferCompleteSubscribeRequest], *connect_go.ServerStream[v1.TransferCompleteSubscribeResponse]) error {

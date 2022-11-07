@@ -151,14 +151,6 @@ message TransactResponse {
   CompletedTransfer transfer = 1;
 }
 
-message HelloRequest {
-  string name = 1;
-}
-
-message HelloResponse {
-  string message = 1;
-}
-
 message TransferCompleteSubscribeRequest {
     string id = 1;
 }
@@ -171,6 +163,5 @@ message TransferCompleteSubscribeResponse {
 service Transactor {
   rpc TransactWithID(TransactWithIDRequest) returns (TransactWithIDResponse);
   rpc Transact(TransactRequest) returns (TransactResponse);
-  rpc Hello(HelloRequest) returns (HelloResponse);
   rpc TransferCompleteSubscribe (TransferCompleteSubscribeRequest) returns (stream TransferCompleteSubscribeResponse) {}
 }

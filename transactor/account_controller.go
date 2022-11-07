@@ -24,7 +24,6 @@ func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
 
 		debitAccount.Balance = balance.Sub(amount).String()
 		t.put(debitAccount)
-		t.balanceUpdateFunction(debitAccount, tx)
 		t.broadcaster <- &transactionsv1.TransferCompleteSubscribeResponse{
 			Account:     debitAccount,
 			Transaction: tx,
@@ -42,7 +41,6 @@ func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
 
 		creditAccount.Balance = balance.Add(amount).String()
 		t.put(creditAccount)
-		t.balanceUpdateFunction(creditAccount, tx)
 		t.broadcaster <- &transactionsv1.TransferCompleteSubscribeResponse{
 			Account:     creditAccount,
 			Transaction: tx,

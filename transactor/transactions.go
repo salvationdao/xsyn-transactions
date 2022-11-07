@@ -3,7 +3,6 @@ package transactor
 import (
 	"context"
 	"errors"
-	"fmt"
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/gofrs/uuid"
 	"github.com/rs/zerolog/log"
@@ -13,11 +12,6 @@ import (
 	"xsyn-transactions/boiler"
 	transactionsv1 "xsyn-transactions/gen/transactions/v1"
 )
-
-func (t *Transactor) Hello(ctx context.Context, req *connect_go.Request[transactionsv1.HelloRequest]) (*connect_go.Response[transactionsv1.HelloResponse], error) {
-	fmt.Println(req.Msg.Name)
-	return connect_go.NewResponse[transactionsv1.HelloResponse](&transactionsv1.HelloResponse{Message: fmt.Sprintf("hello there %s", req.Msg.Name)}), nil
-}
 
 // Transact makes a transaction using user id and ledger code
 func (t *Transactor) Transact(ctx context.Context, req *connect_go.Request[transactionsv1.TransactRequest]) (*connect_go.Response[transactionsv1.TransactResponse], error) {

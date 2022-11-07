@@ -9,8 +9,6 @@ import (
 )
 
 func (t *Transactor) GetBalance(ctx context.Context, req *connect_go.Request[transactionsv1.GetBalanceRequest]) (*connect_go.Response[transactionsv1.GetBalanceResponse], error) {
-	fmt.Println("here1")
-
 	account, err := t.get(req.Msg.UserId, req.Msg.Ledger)
 	if err != nil {
 		if errors.Is(err, ErrUnableToFindAccount) && req.Msg.CreateIfNotExists {
@@ -26,8 +24,6 @@ func (t *Transactor) GetBalance(ctx context.Context, req *connect_go.Request[tra
 			return nil, connect_go.NewError(connect_go.CodeInternal, err)
 		}
 	}
-
-	fmt.Println(account.Balance)
 
 	return connect_go.NewResponse[transactionsv1.GetBalanceResponse](&transactionsv1.GetBalanceResponse{
 		Balance: account.Balance,
