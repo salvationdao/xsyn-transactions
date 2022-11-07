@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/bufbuild/connect-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -49,6 +51,8 @@ func main() {
 
 					// api details
 					&cli.IntFlag{Name: "api_port", Value: 8087, EnvVars: []string{envPrefix + "_API_PORT", "API_PORT"}, Usage: "port to run the API"},
+
+					&cli.StringFlag{Name: "auth_key", Value: "d21f0c89-567e-4b4f-928f-68679e48df6c", EnvVars: []string{envPrefix + "_AUTH_KEY"}, Usage: "Auth key for clients to connect to xsyn-transactions"},
 				},
 				Action: RunService,
 			},
@@ -70,6 +74,7 @@ func RunService(c *cli.Context) error {
 	toDbMaxOpenConns := c.Int("db_max_open_conns")
 
 	apiPort := c.Int("api_port")
+	authKey := c.String("auth_key")
 
 	newTransactor, err := transactor.NewTransactor(
 		&transactor.NewTransactorOpts{
@@ -91,9 +96,9 @@ func RunService(c *cli.Context) error {
 	}
 
 	mux := http.NewServeMux()
-	path, handler := transactionsv1connect.NewTransactorHandler(newTransactor)
+	path, handler := transactionsv1connect.NewTransactorHandler(newTransactor, connect.WithInterceptors(newAuthInterceptor(authKey)))
 	mux.Handle(path, handler)
-	path, handler = transactionsv1connect.NewAccountsHandler(newTransactor)
+	path, handler = transactionsv1connect.NewAccountsHandler(newTransactor, connect.WithInterceptors(newAuthInterceptor(authKey)))
 	mux.Handle(path, handler)
 
 	hostAddr := fmt.Sprintf("localhost:%d", apiPort)
@@ -109,4 +114,27 @@ func RunService(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+// newAuthInterceptor created the rpc middleware for our auth
+func newAuthInterceptor(authKey string) connect.UnaryInterceptorFunc {
+	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(
+			ctx context.Context,
+			req connect.AnyRequest,
+		) (connect.AnyResponse, error) {
+			if req.Spec().IsClient {
+				// Send a token with client requests.
+				req.Header().Set("xsyn-transaction-auth-key", authKey)
+			} else if req.Header().Get("xsyn-transaction-auth-key") != authKey {
+				// Check token in handlers.
+				return nil, connect.NewError(
+					connect.CodeUnauthenticated,
+					fmt.Errorf("invalid token provided"),
+				)
+			}
+			return next(ctx, req)
+		}
+	}
+	return interceptor
 }
