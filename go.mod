@@ -1,6 +1,6 @@
 module xsyn-transactions
 
-go 1.18
+go 1.19
 
 require (
 	github.com/bufbuild/connect-go v1.1.0
@@ -10,6 +10,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/makiuchi-d/arelo v1.10.0
+	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/rs/zerolog v1.28.0
 	github.com/sasha-s/go-deadlock v0.3.1
 	github.com/shopspring/decimal v1.3.1
@@ -52,7 +53,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
-	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect

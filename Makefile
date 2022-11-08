@@ -24,7 +24,7 @@ init: docker-start tools go-mod-tidy docker-setup db-reset
 
 .PHONY: docker-start
 docker-start:
-	docker start $(DOCKER_CONTAINER) || docker run -d -p $(LOCAL_DEV_DB_PORT):5432 --name $(DOCKER_CONTAINER) -e POSTGRES_USER=$(PACKAGE) -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=$(PACKAGE) timescale/timescaledb-ha:pg13-latest
+	docker start $(DOCKER_CONTAINER) || docker run -d -p $(LOCAL_DEV_DB_PORT):5432 --name $(DOCKER_CONTAINER) -e POSTGRES_USER=$(PACKAGE) -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=$(PACKAGE) timescale/timescaledb-ha:pg14-latest
 
 .PHONY: go-mod-tidy
 go-mod-tidy:

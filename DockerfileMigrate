@@ -1,11 +1,13 @@
 # builder image
-FROM golang:1.19.1-alpine3.16 as builder
+FROM golang:1.19.3-alpine3.16 as builder
 ADD ./ /build/
 WORKDIR /build
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o xsyn-transactions ./cmd/server
 
 FROM alpine:3.16
 COPY --from=builder /build/xsyn-transactions .
+COPY --from=builder /build/bin/migrate ./bin/migrate
+COPY --from=builder /build/migrations ./migrations
 
 # executable
 ENTRYPOINT [ "./xsyn-transactions" ]

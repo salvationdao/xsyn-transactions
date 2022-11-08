@@ -43,7 +43,7 @@ func main() {
 					// db details
 					&cli.StringFlag{Name: "db_user", Value: "xsyn-transactions", Usage: "The user for postgres", EnvVars: []string{envPrefix + "_DB_USER"}},
 					&cli.StringFlag{Name: "db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "_DB_PASS"}},
-					&cli.StringFlag{Name: "db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_DB_HOST"}},
+					&cli.StringFlag{Name: "db_host", Value: "host.docker.internal", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_DB_HOST"}},
 					&cli.IntFlag{Name: "db_port", Value: 5433, Usage: "The port for postgres", EnvVars: []string{envPrefix + "_DB_PORT"}},
 					&cli.StringFlag{Name: "db_name", Value: "xsyn-transactions", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "DB_NAME"}},
 					&cli.IntFlag{Name: "db_max_idle_conns", Value: 40, EnvVars: []string{envPrefix + "_DB_MAX_IDLE_CONNS"}, Usage: "Database max idle conns"},
@@ -106,7 +106,7 @@ func RunService(c *cli.Context) error {
 	log.Info().Msgf("serving transactor on %s", hostAddr)
 	err = http.ListenAndServe(
 		hostAddr,
-		// Use h2c so we can serve HTTP/2 without TLS.
+		// Use h2c, so we can serve HTTP/2 without TLS.
 		h2c.NewHandler(mux, &http2.Server{}),
 	)
 	if err != nil {
