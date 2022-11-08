@@ -14,7 +14,6 @@ import (
 
 // Transact makes a transaction using user id and ledger code
 func (t *Transactor) Transact(ctx context.Context, req *connect.Request[transactionsv1.TransactRequest]) (*connect.Response[transactionsv1.TransactResponse], error) {
-
 	creditorAccount, err := t.get(req.Msg.CreditUserId, req.Msg.Ledger)
 	if err != nil {
 		if errors.Is(err, ErrUnableToFindAccount) {
@@ -132,7 +131,7 @@ func (t *Transactor) transact(nt *NewTransaction) (*transactionsv1.CompletedTran
 			return transactionError
 		}
 
-		t.log.Info().Str("from account", tx.DebitAccountID).Str("to account", tx.CreditAccountID).Int("ledger", tx.Ledger).Int("transfer code", tx.TransferCode).Str("amount", tx.Amount.String()).Msg("successful transaction")
+		t.log.Info().Str("fromAccount", tx.DebitAccountID).Str("toAccount", tx.CreditAccountID).Int("ledger", tx.Ledger).Int("transferCode", tx.TransferCode).Str("amount", tx.Amount.String()).Msg("successful transaction")
 
 		completedTx = &transactionsv1.CompletedTransfer{
 			Id:              tx.ID,

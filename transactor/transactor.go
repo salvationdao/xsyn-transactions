@@ -114,13 +114,14 @@ func (t *Transactor) TransferCompleteSubscribe(
 	req *connect.Request[transactionsv1.TransferCompleteSubscribeRequest],
 	resp *connect.ServerStream[transactionsv1.TransferCompleteSubscribeResponse],
 ) error {
+	t.log.Info().Str("clientID ", req.Msg.Id).Msg("new transfer complete subscriber")
 	t.clients.Store(req.Msg.Id, resp.Conn())
 
 	for {
 		select {
 		case <-ctx.Done():
 			t.clients.Delete(req.Msg.Id)
-			t.log.Debug().Str("client id", req.Msg.Id).Msg("removing client")
+			t.log.Debug().Str("clientID", req.Msg.Id).Msg("removing client")
 			return nil
 		}
 	}
