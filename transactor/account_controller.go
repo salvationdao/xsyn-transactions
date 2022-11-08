@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/shopspring/decimal"
-	transactionsv1 "xsyn-transactions/gen/transactions/v1"
+	"xsyn-transactions/gen/transactions/v1"
 )
 
 func (t *Transactor) balanceUpdate(tx *transactionsv1.CompletedTransfer) {
@@ -54,15 +54,15 @@ func (t *Transactor) getAndSet(userID string, ledger transactionsv1.Ledger) (*tr
 		return nil, err
 	}
 
-	if _, ok := t.m[userID]; !ok {
-		t.m[userID] = make(map[transactionsv1.Ledger]*transactionsv1.Account)
+	if _, ok := t.userMap[userID]; !ok {
+		t.userMap[userID] = make(map[transactionsv1.Ledger]*transactionsv1.Account)
 	}
 
 	for _, account := range accounts {
-		t.m[account.UserId][ledger] = account
+		t.userMap[account.UserId][ledger] = account
 	}
 
-	if account, ok := t.m[userID][ledger]; ok {
+	if account, ok := t.userMap[userID][ledger]; ok {
 		return account, nil
 	}
 
@@ -73,12 +73,12 @@ func (t *Transactor) getAndSet(userID string, ledger transactionsv1.Ledger) (*tr
 }
 
 func (t *Transactor) get(userID string, ledger transactionsv1.Ledger) (*transactionsv1.Account, error) {
-	t.RLock()
-	defer t.RUnlock()
+	t.userMapLock.RLock()
+	defer t.userMapLock.RUnlock()
 
-	userLedgerMap, ok := t.m[userID]
+	userLedgerMap, ok := t.userMap[userID]
 	if ok {
-		if account, ok := userLedgerMap[ledger]; ok {
+		if account, accountOk := userLedgerMap[ledger]; accountOk {
 			return account, nil
 		}
 	}
@@ -87,7 +87,7 @@ func (t *Transactor) get(userID string, ledger transactionsv1.Ledger) (*transact
 }
 
 func (t *Transactor) put(account *transactionsv1.Account) {
-	t.Lock()
-	t.m[account.UserId][account.Ledger] = account
-	t.Unlock()
+	t.userMapLock.Lock()
+	t.userMap[account.UserId][account.Ledger] = account
+	t.userMapLock.Unlock()
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"time"
 	"xsyn-transactions/boiler"
-	transactionsv1 "xsyn-transactions/gen/transactions/v1"
+	"xsyn-transactions/gen/transactions/v1"
 )
 
 /*

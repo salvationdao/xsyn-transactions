@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	connect_go "github.com/bufbuild/connect-go"
+	"github.com/bufbuild/connect-go"
+	"github.com/puzpuzpuz/xsync"
 	"github.com/rs/zerolog"
 	"github.com/sasha-s/go-deadlock"
-	transactionsv1 "xsyn-transactions/gen/transactions/v1"
+	"xsyn-transactions/gen/transactions/v1"
 	"xsyn-transactions/storage"
 )
 
@@ -16,14 +17,17 @@ var ErrQueueFull = fmt.Errorf("transaction queue is full")
 var ErrUnableToFindAccount = fmt.Errorf("unable to find account")
 
 type Transactor struct {
-	Storage *storage.Storage
-	log     *zerolog.Logger
-	m       map[string]map[transactionsv1.Ledger]*transactionsv1.Account // map[user_id]map[currency]account
-	runner  chan func() error
-	deadlock.RWMutex
+	Storage     *storage.Storage
+	log         *zerolog.Logger
+	runner      chan func() error
+	broadcaster chan *transactionsv1.TransferCompleteSubscribeResponse
 
-	broadcaster   chan *transactionsv1.TransferCompleteSubscribeResponse
-	ClientStreams map[string]connect_go.StreamingHandlerConn
+	userMap     map[string]map[transactionsv1.Ledger]*transactionsv1.Account // map[user_id]map[currency]account
+	userMapLock deadlock.RWMutex
+
+	// We use this cool package, meant to be faster than using mutex locks to ensure concurrency safeness
+	// https://pkg.go.dev/github.com/puzpuzpuz/xsync#Map
+	clients *xsync.MapOf[string, connect.StreamingHandlerConn]
 }
 
 type NewTransactorOpts struct {
@@ -33,13 +37,11 @@ type NewTransactorOpts struct {
 
 func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 	var err error
-
 	txr := &Transactor{
-		m:             make(map[string]map[transactionsv1.Ledger]*transactionsv1.Account),
-		runner:        make(chan func() error, 100),
-		broadcaster:   make(chan *transactionsv1.TransferCompleteSubscribeResponse, 1000),
-		ClientStreams: make(map[string]connect_go.StreamingHandlerConn),
-		RWMutex:       deadlock.RWMutex{},
+		runner:      make(chan func() error, 100),
+		broadcaster: make(chan *transactionsv1.TransferCompleteSubscribeResponse, 1000),
+		userMap:     make(map[string]map[transactionsv1.Ledger]*transactionsv1.Account),
+		clients:     xsync.NewMapOf[connect.StreamingHandlerConn](),
 	}
 
 	if opts == nil {
@@ -59,17 +61,17 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 		return nil, err
 	}
 
-	txr.Lock()
+	txr.userMapLock.Lock()
 	for _, account := range accounts {
 		ledger := account.Ledger
 		// create user ledger account map if not exist
-		if _, ok := txr.m[account.UserId]; !ok {
-			txr.m[account.UserId] = make(map[transactionsv1.Ledger]*transactionsv1.Account)
+		if _, ok := txr.userMap[account.UserId]; !ok {
+			txr.userMap[account.UserId] = make(map[transactionsv1.Ledger]*transactionsv1.Account)
 		}
 		// create account on the ledger map
-		txr.m[account.UserId][ledger] = account
+		txr.userMap[account.UserId][ledger] = account
 	}
-	txr.Unlock()
+	txr.userMapLock.Unlock()
 
 	go txr.run()
 	go txr.broadcast()
@@ -95,35 +97,30 @@ func (t *Transactor) run() {
 
 func (t *Transactor) broadcast() {
 	for res := range t.broadcaster {
-		t.RLock()
-		for id, conn := range t.ClientStreams {
+		t.clients.Range(func(key string, conn connect.StreamingHandlerConn) bool {
 			err := conn.Send(res)
 			if err != nil {
-				delete(t.ClientStreams, id)
+				t.clients.Delete(key) // it is safe to modify the map while iterating it
 				t.log.Error().Err(err).Msg("failed to send")
-				return
+				return true
 			}
-		}
-		t.RUnlock()
+			return true
+		})
 	}
 }
 
 func (t *Transactor) TransferCompleteSubscribe(
 	ctx context.Context,
-	req *connect_go.Request[transactionsv1.TransferCompleteSubscribeRequest],
-	resp *connect_go.ServerStream[transactionsv1.TransferCompleteSubscribeResponse],
+	req *connect.Request[transactionsv1.TransferCompleteSubscribeRequest],
+	resp *connect.ServerStream[transactionsv1.TransferCompleteSubscribeResponse],
 ) error {
-	t.Lock()
-	t.ClientStreams[req.Msg.Id] = resp.Conn()
-	t.Unlock()
+	t.clients.Store(req.Msg.Id, resp.Conn())
 
 	for {
 		select {
 		case <-ctx.Done():
-			t.Lock()
-			delete(t.ClientStreams, req.Msg.Id)
+			t.clients.Delete(req.Msg.Id)
 			t.log.Debug().Str("client id", req.Msg.Id).Msg("removing client")
-			t.Unlock()
 			return nil
 		}
 	}

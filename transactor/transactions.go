@@ -3,42 +3,41 @@ package transactor
 import (
 	"context"
 	"errors"
-	connect_go "github.com/bufbuild/connect-go"
+	"github.com/bufbuild/connect-go"
 	"github.com/gofrs/uuid"
-	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"sync"
 	"xsyn-transactions/boiler"
-	transactionsv1 "xsyn-transactions/gen/transactions/v1"
+	"xsyn-transactions/gen/transactions/v1"
 )
 
 // Transact makes a transaction using user id and ledger code
-func (t *Transactor) Transact(ctx context.Context, req *connect_go.Request[transactionsv1.TransactRequest]) (*connect_go.Response[transactionsv1.TransactResponse], error) {
+func (t *Transactor) Transact(ctx context.Context, req *connect.Request[transactionsv1.TransactRequest]) (*connect.Response[transactionsv1.TransactResponse], error) {
 
 	creditorAccount, err := t.get(req.Msg.CreditUserId, req.Msg.Ledger)
 	if err != nil {
 		if errors.Is(err, ErrUnableToFindAccount) {
 			err = t.Storage.CreateAccount(req.Msg.CreditUserId, transactionsv1.AccountCode_AccountUser, req.Msg.Ledger)
 			if err != nil {
-				return nil, connect_go.NewError(connect_go.CodeInternal, err)
+				return nil, connect.NewError(connect.CodeInternal, err)
 			}
 			creditorAccount, err = t.get(req.Msg.CreditUserId, req.Msg.Ledger)
 			if err != nil {
-				return nil, connect_go.NewError(connect_go.CodeInternal, err)
+				return nil, connect.NewError(connect.CodeInternal, err)
 			}
 		} else {
-			return nil, connect_go.NewError(connect_go.CodeInternal, err)
+			return nil, connect.NewError(connect.CodeInternal, err)
 		}
 	}
 	debitorAccount, err := t.get(req.Msg.DebitUserId, req.Msg.Ledger)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	amount, err := decimal.NewFromString(req.Msg.Amount)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	tx, err := t.transact(&NewTransaction{
@@ -51,31 +50,31 @@ func (t *Transactor) Transact(ctx context.Context, req *connect_go.Request[trans
 		TransferCode:    req.Msg.Code,
 	})
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect_go.NewResponse[transactionsv1.TransactResponse](&transactionsv1.TransactResponse{Transfer: tx}), nil
+	return connect.NewResponse[transactionsv1.TransactResponse](&transactionsv1.TransactResponse{Transfer: tx}), nil
 }
 
 // TransactWithID makes a transaction using user id and ledger code but takes a pre-generated tx id
-func (t *Transactor) TransactWithID(ctx context.Context, req *connect_go.Request[transactionsv1.TransactWithIDRequest]) (*connect_go.Response[transactionsv1.TransactWithIDResponse], error) {
+func (t *Transactor) TransactWithID(ctx context.Context, req *connect.Request[transactionsv1.TransactWithIDRequest]) (*connect.Response[transactionsv1.TransactWithIDResponse], error) {
 	creditorAccount, err := t.get(req.Msg.CreditUserId, req.Msg.Ledger)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	debitorAccount, err := t.get(req.Msg.DebitUserId, req.Msg.Ledger)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	amount, err := decimal.NewFromString(req.Msg.Amount)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	uid, err := uuid.FromString(req.Msg.TxId)
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	tx, err := t.transact(&NewTransaction{
@@ -89,10 +88,10 @@ func (t *Transactor) TransactWithID(ctx context.Context, req *connect_go.Request
 		TransferCode:    req.Msg.Code,
 	})
 	if err != nil {
-		return nil, connect_go.NewError(connect_go.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect_go.NewResponse[transactionsv1.TransactWithIDResponse](&transactionsv1.TransactWithIDResponse{Transfer: tx}), nil
+	return connect.NewResponse[transactionsv1.TransactWithIDResponse](&transactionsv1.TransactWithIDResponse{Transfer: tx}), nil
 }
 
 type NewTransaction struct {
@@ -128,10 +127,12 @@ func (t *Transactor) transact(nt *NewTransaction) (*transactionsv1.CompletedTran
 
 		transactionError = tx.Insert(t.Storage, boil.Infer())
 		if transactionError != nil {
-			log.Error().Err(transactionError).Str("from", tx.DebitAccountID).Str("to", tx.CreditAccountID).Str("id", tx.ID).Str("amount", tx.Amount.String()).Msg("transaction failed")
+			t.log.Error().Err(transactionError).Str("from", tx.DebitAccountID).Str("to", tx.CreditAccountID).Str("id", tx.ID).Str("amount", tx.Amount.String()).Msg("transaction failed")
 			wg.Done()
 			return transactionError
 		}
+
+		t.log.Info().Str("from account", tx.DebitAccountID).Str("to account", tx.CreditAccountID).Int("ledger", tx.Ledger).Int("transfer code", tx.TransferCode).Str("amount", tx.Amount.String()).Msg("successful transaction")
 
 		completedTx = &transactionsv1.CompletedTransfer{
 			Id:              tx.ID,
@@ -152,7 +153,7 @@ func (t *Transactor) transact(nt *NewTransaction) (*transactionsv1.CompletedTran
 	select {
 	case t.runner <- fn: //put in channel
 	default: //unless it's full!
-		log.Error().Msg("Transaction queue is blocked! 100 transactions waiting to be processed.")
+		t.log.Error().Msg("Transaction queue is blocked! 100 transactions waiting to be processed.")
 		return completedTx, ErrQueueFull
 	}
 	wg.Wait()
@@ -172,7 +173,7 @@ func (t *Transactor) Close() {
 	select {
 	case t.runner <- fn: //queue close
 	default: //unless it's full!
-		log.Error().Msg("Transaction queue is blocked! Exiting.")
+		t.log.Error().Msg("Transaction queue is blocked! Exiting.")
 		return
 	}
 	wg.Wait()

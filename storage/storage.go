@@ -9,7 +9,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"net/url"
 	"xsyn-transactions/boiler"
-	transactionsv1 "xsyn-transactions/gen/transactions/v1"
+	"xsyn-transactions/gen/transactions/v1"
 )
 
 type Storage struct {
