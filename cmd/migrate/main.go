@@ -11,7 +11,7 @@ import (
 	"xsyn-transactions/storage"
 )
 
-const envPrefix = "XSYN_TRANSACTIONS"
+const envPrefix = "XSYN_TRANSACTIONS_MIGRATE"
 
 func main() {
 
@@ -23,21 +23,19 @@ func main() {
 		Name:  "migrate transactions",
 		Usage: "moves transactions from postgres to tigerbeetle",
 		Flags: []cli.Flag{
-			&cli.IntFlag{Name: "batch_size", Value: 8191, Usage: "number of txes to insert each iteration", EnvVars: []string{"BATCH_SIZE"}},
-
 			// old db details
-			&cli.StringFlag{Name: "from_db_user", Value: "passport", Usage: "The user for postgres", EnvVars: []string{envPrefix + "FROM_DB_USER"}},
-			&cli.StringFlag{Name: "from_db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "FROM_DB_PASS"}},
-			&cli.StringFlag{Name: "from_db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "FROM_DB_HOST"}},
-			&cli.IntFlag{Name: "from_db_port", Value: 5432, Usage: "The port for postgres", EnvVars: []string{envPrefix + "FROM_DB_PORT"}},
-			&cli.StringFlag{Name: "from_db_name", Value: "passport", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "FROM_DB_NAME"}},
+			&cli.StringFlag{Name: "from_db_user", Value: "passport", Usage: "The user for postgres", EnvVars: []string{envPrefix + "_FROM_DB_USER"}},
+			&cli.StringFlag{Name: "from_db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "_FROM_DB_PASS"}},
+			&cli.StringFlag{Name: "from_db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_FROM_DB_HOST"}},
+			&cli.IntFlag{Name: "from_db_port", Value: 5432, Usage: "The port for postgres", EnvVars: []string{envPrefix + "_FROM_DB_PORT"}},
+			&cli.StringFlag{Name: "from_db_name", Value: "passport", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "_FROM_DB_NAME"}},
 
 			// new db details
-			&cli.StringFlag{Name: "to_db_user", Value: "xsyn-transactions", Usage: "The user for postgres", EnvVars: []string{envPrefix + "TO_DB_USER"}},
-			&cli.StringFlag{Name: "to_db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "TO_DB_PASS"}},
-			&cli.StringFlag{Name: "to_db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "TO_DB_HOST"}},
-			&cli.IntFlag{Name: "to_db_port", Value: 5433, Usage: "The port for postgres", EnvVars: []string{envPrefix + "TO_DB_PORT"}},
-			&cli.StringFlag{Name: "to_db_name", Value: "xsyn-transactions", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "TO_DB_NAME"}},
+			&cli.StringFlag{Name: "to_db_user", Value: "xsyn-transactions-db", Usage: "The user for postgres", EnvVars: []string{envPrefix + "_TO_DB_USER"}},
+			&cli.StringFlag{Name: "to_db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "_TO_DB_PASS"}},
+			&cli.StringFlag{Name: "to_db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_TO_DB_HOST"}},
+			&cli.IntFlag{Name: "to_db_port", Value: 5433, Usage: "The port for postgres", EnvVars: []string{envPrefix + "_TO_DB_PORT"}},
+			&cli.StringFlag{Name: "to_db_name", Value: "xsyn-transactions-db", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "_TO_DB_NAME"}},
 			&cli.IntFlag{Name: "to_db_max_idle_conns", Value: 40, EnvVars: []string{envPrefix + "_TO_DB_MAX_IDLE_CONNS"}, Usage: "Database max idle conns"},
 			&cli.IntFlag{Name: "to_db_max_open_conns", Value: 50, EnvVars: []string{envPrefix + "_TO_DB_MAX_OPEN_CONNS"}, Usage: "Database max open conns"},
 		},
@@ -81,6 +79,16 @@ func RunMigrate(c *cli.Context) error {
 		return fmt.Errorf("create new storage instance: %w", err)
 	}
 
+	dataExists, err := newStorage.DataExists()
+	if err != nil {
+		return fmt.Errorf("checking if data exists: %w", err)
+	}
+	// if data already exists, skip data migration
+	// this is used because you cannot run a service a single time in docker compose
+	if dataExists {
+		return nil
+	}
+
 	newLegacyStorage, err := legacy_storage.NewLegacyStorage(&legacy_storage.StorageOpts{
 		DatabaseTxUser: fromDbUser,
 		DatabaseTxPass: fromDbPass,
@@ -118,6 +126,7 @@ type MigrateFromService interface {
 type MigrateToService interface {
 	MigrateInsertAccounts([]*transactionsv1.Account) error
 	MigrateInsertTransfers([]*transactionsv1.MigrationTransfer) error
+	DataExists() (bool, error)
 }
 
 func (c *Migrator) MigrateAccounts() error {

@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  xsyn-transactions-db:
+    image: timescale/timescaledb-ha:pg14-latest
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=xsyn-transactions-db
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=xsyn-transactions-db
+    networks:
+      - passport
+
+  migrate:
+    image: migrate/migrate
+    restart: on-failure
+    networks:
+      - passport
+    volumes:
+      - ./migrations:/migrations
+    command: [ "-path", "/migrations", "-database",  "postgres://xsyn-transactions-db:dev@xsyn-transactions-db:5432/xsyn-transactions-db?sslmode=disable", "up" ]
+
+  backend:
+    image: ninja-syndicate/xsyn-transactions:develop
+    restart: always
+    command: [ "s" ]
+    environment:
+      - XSYN_TRANSACTIONS_DB_HOST=xsyn-transactions-db
+      - XSYN_TRANSACTIONS_DB_PORT=5432
+    depends_on:
+      - backend-data-migrate
+      - migrate
+      - xsyn-transactions-db
+    ports:
+      - "8087:8087"
+    networks:
+      - passport
+
+  backend-data-migrate:
+      image: ninja-syndicate/xsyn-transactions-migrate:develop
+      restart: on-failure
+      environment:
+         - XSYN_TRANSACTIONS_MIGRATE_FROM_DB_HOST=host.docker.internal
+         - XSYN_TRANSACTIONS_MIGRATE_FROM_DB_PORT=5432
+         - XSYN_TRANSACTIONS_MIGRATE_TO_DB_HOST=xsyn-transactions-db
+         - XSYN_TRANSACTIONS_MIGRATE_TO_DB_PORT=5432
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      networks:
+        - passport
+
+networks:
+  passport:
+    driver: bridge

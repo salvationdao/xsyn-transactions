@@ -60,6 +60,11 @@ func NewTransactor(opts *NewTransactorOpts) (*Transactor, error) {
 		txr.log.Error().Err(err).Msg("unable to retrieve user account balances")
 		return nil, err
 	}
+	if len(accounts) == 0 {
+		err = fmt.Errorf("accounts len is 0")
+		txr.log.Error().Err(err).Msg("unexpected accounts length, possibly incorrect spin up")
+		return nil, err
+	}
 
 	txr.userMapLock.Lock()
 	for _, account := range accounts {

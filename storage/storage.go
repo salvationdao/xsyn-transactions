@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/url"
 	"xsyn-transactions/boiler"
 	"xsyn-transactions/gen/transactions/v1"
@@ -113,6 +114,16 @@ func (s *Storage) GetAllUserAccounts(userID string) ([]*transactionsv1.Account, 
 	}
 
 	return results, nil
+}
+
+func (s *Storage) DataExists() (bool, error) {
+	// since we can't make this docker on run once, we check if data already exists. If so return nil
+	count, err := boiler.Accounts(qm.Limit(1)).Count(s)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func (s *Storage) CreateAccount(userId string, code transactionsv1.AccountCode, ledger transactionsv1.Ledger) error {

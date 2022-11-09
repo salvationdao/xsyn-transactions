@@ -88,3 +88,8 @@ migrate-from-old:
 .PHONY: serve
 serve:
 	${BIN}/air -c ./.air.toml
+
+.PHONY: docker-build
+docker-build:
+	 docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions .
+	 docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .

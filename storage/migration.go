@@ -38,12 +38,12 @@ func (s *Storage) MigrateInsertAccounts(accounts []*transactionsv1.Account) erro
 			return err
 		}
 
-		err = newAccount.Insert(tx, boil.Infer())
+		err = newAccount.Upsert(tx, false, []string{boiler.AccountColumns.ID}, boil.Infer(), boil.Infer())
 		if err != nil {
 			s.log.Error().Err(err).Interface("newAccount", newAccount).Msg("failed to insert new account")
 			return err
 		}
-		s.log.Info().Str("user_id", newAccount.XsynUserID).Int("ledger", newAccount.Ledger).Msg("inserted new account")
+		s.log.Info().Str("user_id", newAccount.XsynUserID).Int("ledger", newAccount.Ledger).Msg("inserted/updated new account")
 
 	}
 
@@ -76,7 +76,7 @@ func (s *Storage) MigrateInsertTransfers(txes []*transactionsv1.MigrationTransfe
 			CreditAccountID: transaction.CreditAccountId,
 			Ledger:          int(transaction.Ledger),
 			TransferCode:    int(transaction.Code),
-			CreatedAt:       time.Unix(int64(transaction.Timestamp), 0),
+			CreatedAt:       time.Unix(transaction.Timestamp, 0),
 		}
 
 		newTx.Amount, err = decimal.NewFromString(transaction.Amount)
@@ -84,11 +84,12 @@ func (s *Storage) MigrateInsertTransfers(txes []*transactionsv1.MigrationTransfe
 			return err
 		}
 
-		err = newTx.Insert(tx, boil.Infer())
+		err = newTx.Upsert(tx, false, []string{boiler.TransactionColumns.ID}, boil.Infer(), boil.Infer())
 		if err != nil {
+			s.log.Error().Err(err).Interface("newTx", newTx).Msg("failed to insert new tx")
 			return err
 		}
-		s.log.Info().Str("id", newTx.ID).Str("amount", newTx.Amount.String()).Msg("inserted new tx")
+		s.log.Info().Str("id", newTx.ID).Str("amount", newTx.Amount.String()).Msg("inserted/updated new tx")
 	}
 
 	// enable trigger

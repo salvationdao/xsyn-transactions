@@ -41,11 +41,11 @@ func main() {
 				Usage:   "run xsyn transaction service",
 				Flags: []cli.Flag{
 					// db details
-					&cli.StringFlag{Name: "db_user", Value: "xsyn-transactions", Usage: "The user for postgres", EnvVars: []string{envPrefix + "_DB_USER"}},
+					&cli.StringFlag{Name: "db_user", Value: "xsyn-transactions-db", Usage: "The user for postgres", EnvVars: []string{envPrefix + "_DB_USER"}},
 					&cli.StringFlag{Name: "db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "_DB_PASS"}},
-					&cli.StringFlag{Name: "db_host", Value: "host.docker.internal", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_DB_HOST"}},
+					&cli.StringFlag{Name: "db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_DB_HOST"}},
 					&cli.IntFlag{Name: "db_port", Value: 5433, Usage: "The port for postgres", EnvVars: []string{envPrefix + "_DB_PORT"}},
-					&cli.StringFlag{Name: "db_name", Value: "xsyn-transactions", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "DB_NAME"}},
+					&cli.StringFlag{Name: "db_name", Value: "xsyn-transactions-db", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "DB_NAME"}},
 					&cli.IntFlag{Name: "db_max_idle_conns", Value: 40, EnvVars: []string{envPrefix + "_DB_MAX_IDLE_CONNS"}, Usage: "Database max idle conns"},
 					&cli.IntFlag{Name: "db_max_open_conns", Value: 50, EnvVars: []string{envPrefix + "_DB_MAX_OPEN_CONNS"}, Usage: "Database max open conns"},
 
