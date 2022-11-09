@@ -11,13 +11,13 @@ services:
       - POSTGRES_PASSWORD=dev
       - POSTGRES_DB=xsyn-transactions-db
     networks:
-      - passport
+      - xsyn-transactions
 
   migrate:
     image: migrate/migrate
     restart: on-failure
     networks:
-      - passport
+      - xsyn-transactions
     volumes:
       - ./migrations:/migrations
     command: [ "-path", "/migrations", "-database",  "postgres://xsyn-transactions-db:dev@xsyn-transactions-db:5432/xsyn-transactions-db?sslmode=disable", "up" ]
@@ -36,7 +36,7 @@ services:
     ports:
       - "8087:8087"
     networks:
-      - passport
+      - xsyn-transactions
 
   backend-data-migrate:
       image: ninja-syndicate/xsyn-transactions-migrate:develop
@@ -49,8 +49,9 @@ services:
       extra_hosts:
         - "host.docker.internal:host-gateway"
       networks:
-        - passport
+        - xsyn-transactions
 
 networks:
-  passport:
+  xsyn-transactions:
+    name: xsyn-transactions
     driver: bridge

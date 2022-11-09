@@ -101,7 +101,7 @@ func RunService(c *cli.Context) error {
 	path, handler = transactionsv1connect.NewAccountsHandler(newTransactor, connect.WithInterceptors(newAuthInterceptor(authKey)))
 	mux.Handle(path, handler)
 
-	hostAddr := fmt.Sprintf("localhost:%d", apiPort)
+	hostAddr := fmt.Sprintf("0.0.0.0:%d", apiPort)
 
 	log.Info().Msgf("serving transactor on %s", hostAddr)
 	err = http.ListenAndServe(

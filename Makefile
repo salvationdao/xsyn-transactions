@@ -89,7 +89,20 @@ migrate-from-old:
 serve:
 	${BIN}/air -c ./.air.toml
 
+.PHONY: docker-serve
+docker-serve:
+	docker compose up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions .
+	docker compose up || docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
+	docker compose up
+
+.PHONY: docker-reset
+docker-reset: docker-down docker-serve
+
 .PHONY: docker-build
 docker-build:
 	 docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions .
 	 docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
+
+.PHONY: docker-down
+docker-down:
+	docker compose down
