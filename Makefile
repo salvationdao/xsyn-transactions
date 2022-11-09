@@ -91,8 +91,7 @@ serve:
 
 .PHONY: docker-serve
 docker-serve:
-	docker compose up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions .
-	docker compose up || docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
+	docker compose up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions . && docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
 	docker compose up
 
 .PHONY: docker-reset
