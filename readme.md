@@ -13,7 +13,10 @@ The server will host a REST API that can be used to register accounts and transf
 
 It uses protobufs to generate the handlers.
 
-Dependency-wise, it SHOULD be completely separate from the XSYN server.
+Built on linux with the following dependencies
+* go 1.19
+* docker 20.10.17
+* docker compose v2.12.2
 
 Spin-up
 If you are working on this codebase `make init` will initialize the codebase including spinning up the database with migrations and data migration.
