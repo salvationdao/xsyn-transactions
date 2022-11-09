@@ -45,12 +45,12 @@ func main() {
 					&cli.StringFlag{Name: "db_pass", Value: "dev", Usage: "The pass for postgres", EnvVars: []string{envPrefix + "_DB_PASS"}},
 					&cli.StringFlag{Name: "db_host", Value: "localhost", Usage: "The host for postgres", EnvVars: []string{envPrefix + "_DB_HOST"}},
 					&cli.IntFlag{Name: "db_port", Value: 5433, Usage: "The port for postgres", EnvVars: []string{envPrefix + "_DB_PORT"}},
-					&cli.StringFlag{Name: "db_name", Value: "xsyn-transactions-db", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "DB_NAME"}},
+					&cli.StringFlag{Name: "db_name", Value: "xsyn-transactions-db", Usage: "The db name for postgres", EnvVars: []string{envPrefix + "_DB_NAME"}},
 					&cli.IntFlag{Name: "db_max_idle_conns", Value: 40, EnvVars: []string{envPrefix + "_DB_MAX_IDLE_CONNS"}, Usage: "Database max idle conns"},
 					&cli.IntFlag{Name: "db_max_open_conns", Value: 50, EnvVars: []string{envPrefix + "_DB_MAX_OPEN_CONNS"}, Usage: "Database max open conns"},
 
 					// api details
-					&cli.IntFlag{Name: "api_port", Value: 8087, EnvVars: []string{envPrefix + "_API_PORT", "API_PORT"}, Usage: "port to run the API"},
+					&cli.IntFlag{Name: "api_port", Value: 8087, EnvVars: []string{envPrefix + "_API_PORT"}, Usage: "port to run the API"},
 
 					&cli.StringFlag{Name: "auth_key", Value: "d21f0c89-567e-4b4f-928f-68679e48df6c", EnvVars: []string{envPrefix + "_AUTH_KEY"}, Usage: "Auth key for clients to connect to xsyn-transactions"},
 				},

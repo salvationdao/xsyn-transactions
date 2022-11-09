@@ -1,8 +1,6 @@
 package transactor
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/shopspring/decimal"
 	"xsyn-transactions/gen/transactions/v1"
 )
@@ -65,9 +63,6 @@ func (t *Transactor) getAndSet(userID string, ledger transactionsv1.Ledger) (*tr
 	if account, ok := t.userMap[userID][ledger]; ok {
 		return account, nil
 	}
-
-	jsn, _ := json.Marshal(accounts)
-	fmt.Println(string(jsn))
 
 	return nil, ErrUnableToFindAccount
 }

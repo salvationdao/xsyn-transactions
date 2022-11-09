@@ -8,10 +8,10 @@ wipe = true
 tag = ["boiler"]
 
 [psql]
-  dbname = "xsyn-transactions"
+  dbname = "xsyn-transactions-db"
   host   = "localhost"
   port   = 5433
-  user   = "xsyn-transactions"
+  user   = "xsyn-transactions-db"
   pass   = "dev"
   schema = "public"
   blacklist = ["migrations", "other"]

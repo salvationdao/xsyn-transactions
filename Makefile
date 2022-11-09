@@ -9,37 +9,25 @@ BIN = $(CURDIR)/bin
 SERVER = $(CURDIR)
 
 # DB Settings
-LOCAL_DEV_DB_USER?=$(PACKAGE)
+LOCAL_DEV_DB_USER?=$(PACKAGE)-db
 LOCAL_DEV_DB_PASS?=dev
 LOCAL_DEV_DB_HOST?=localhost
 LOCAL_DEV_DB_PORT?=5433
-LOCAL_DEV_DB_DATABASE?=$(PACKAGE)
+LOCAL_DEV_DB_DATABASE?=$(PACKAGE)-db
 DB_CONNECTION_STRING="postgres://$(LOCAL_DEV_DB_USER):$(LOCAL_DEV_DB_PASS)@$(LOCAL_DEV_DB_HOST):$(LOCAL_DEV_DB_PORT)/$(LOCAL_DEV_DB_DATABASE)?sslmode=disable"
 
 # Versions
 BUF_VERSION=1.9.0
 
 .PHONY: init
-init: docker-start tools go-mod-tidy docker-setup db-reset
-
-.PHONY: docker-start
-docker-start:
-	docker start $(DOCKER_CONTAINER) || docker run -d -p $(LOCAL_DEV_DB_PORT):5432 --name $(DOCKER_CONTAINER) -e POSTGRES_USER=$(PACKAGE) -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=$(PACKAGE) timescale/timescaledb-ha:pg14-latest
+init: tools go-mod-tidy docker-serve-dev
 
 .PHONY: go-mod-tidy
 go-mod-tidy:
 	go mod tidy
 
-.PHONY: docker-setup
-docker-setup:
-	docker exec -it $(DOCKER_CONTAINER)\
- 	psql -U $(LOCAL_DEV_DB_USER) -c\
-	"CREATE EXTENSION IF NOT EXISTS pg_trgm;\
-	CREATE EXTENSION IF NOT EXISTS pgcrypto;\
-	CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
-
 .PHONY: db-reset
-db-reset: db-drop db-migrate db-boiler
+db-reset: db-drop db-migrate db-boiler migrate-from-old
 
 .PHONY: db-drop
 db-drop:
@@ -89,10 +77,18 @@ migrate-from-old:
 serve:
 	${BIN}/air -c ./.air.toml
 
+.PHONY: docker-serve-dev
+docker-serve-dev:
+	docker compose --profile dev up --detach
+
+.PHONY: docker-stop-dev
+docker-stop-dev:
+	docker compose --profile dev stop
+
 .PHONY: docker-serve
 docker-serve:
-	docker compose up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions . && docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
-	docker compose up
+	docker compose --profile serve up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions . && docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
+	docker compose --profile serve up
 
 .PHONY: docker-reset
 docker-reset: docker-down docker-serve

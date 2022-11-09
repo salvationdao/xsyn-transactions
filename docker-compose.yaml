@@ -4,6 +4,7 @@ services:
   xsyn-transactions-db:
     image: timescale/timescaledb-ha:pg14-latest
     restart: always
+    profiles: ["db", "serve", "dev"]
     ports:
       - "5433:5432"
     environment:
@@ -18,6 +19,7 @@ services:
     restart: on-failure
     networks:
       - xsyn-transactions
+    profiles: ["migrate", "serve", "dev"]
     volumes:
       - ./migrations:/migrations
     command: [ "-path", "/migrations", "-database",  "postgres://xsyn-transactions-db:dev@xsyn-transactions-db:5432/xsyn-transactions-db?sslmode=disable", "up" ]
@@ -26,6 +28,7 @@ services:
     image: ninja-syndicate/xsyn-transactions:develop
     restart: always
     command: [ "s" ]
+    profiles: ["api", "serve"]
     environment:
       - XSYN_TRANSACTIONS_DB_HOST=xsyn-transactions-db
       - XSYN_TRANSACTIONS_DB_PORT=5432
@@ -41,6 +44,7 @@ services:
   backend-data-migrate:
       image: ninja-syndicate/xsyn-transactions-migrate:develop
       restart: on-failure
+      profiles: ["migrate-data", "serve", "dev"]
       environment:
          - XSYN_TRANSACTIONS_MIGRATE_FROM_DB_HOST=host.docker.internal
          - XSYN_TRANSACTIONS_MIGRATE_FROM_DB_PORT=5432
