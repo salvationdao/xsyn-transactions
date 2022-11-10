@@ -87,8 +87,7 @@ docker-stop-dev:
 
 .PHONY: docker-serve
 docker-serve:
-	docker compose --profile serve up || docker build -t ninja-syndicate/xsyn-transactions:develop -f ./DockerfileXsynTransactions . && docker build -t ninja-syndicate/xsyn-transactions-migrate:develop -f ./DockerfileMigrate .
-	docker compose --profile serve up
+	docker compose --profile serve up -d
 
 .PHONY: docker-reset
 docker-reset: docker-down docker-serve
@@ -101,3 +100,7 @@ docker-build:
 .PHONY: docker-down
 docker-down:
 	docker compose down
+
+.PHONY: docker-restart-api
+docker-restart-api:
+	docker compose --profile api restart

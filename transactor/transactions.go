@@ -126,7 +126,13 @@ func (t *Transactor) transact(nt *NewTransaction) (*transactionsv1.CompletedTran
 
 		transactionError = tx.Insert(t.Storage, boil.Infer())
 		if transactionError != nil {
-			t.log.Error().Err(transactionError).Str("from", tx.DebitAccountID).Str("to", tx.CreditAccountID).Str("id", tx.ID).Str("amount", tx.Amount.String()).Msg("transaction failed")
+			t.log.Error().
+				Err(transactionError).
+				Str("from", tx.DebitAccountID).
+				Str("to", tx.CreditAccountID).
+				Str("id", tx.ID).
+				Str("amount", tx.Amount.String()).
+				Msg("transaction failed")
 			wg.Done()
 			return transactionError
 		}
