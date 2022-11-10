@@ -191,14 +191,19 @@ func (t *Transactor) TransactionGetByID(ctx context.Context, req *connect.Reques
 	}
 
 	return connect.NewResponse[transactionsv1.TransactionGetByIDResponse](&transactionsv1.TransactionGetByIDResponse{Transaction: transaction}), nil
-
 }
 
 func (t *Transactor) TransactionsGetByAccountID(ctx context.Context, req *connect.Request[transactionsv1.TransactionsGetByAccountIDRequest]) (*connect.Response[transactionsv1.TransactionsGetByAccountIDResponse], error) {
-	transactions, err := t.Storage.TransactionsGetByAccountID(req.Msg.AccountId)
+	total, transactions, err := t.Storage.TransactionsGetByAccountID(
+		req.Msg.AccountId,
+		int(req.Msg.Offset),
+		int(req.Msg.PageSize),
+		req.Msg.SortBy,
+		req.Msg.SortDir,
+	)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect.NewResponse[transactionsv1.TransactionsGetByAccountIDResponse](&transactionsv1.TransactionsGetByAccountIDResponse{Transactions: transactions}), nil
+	return connect.NewResponse[transactionsv1.TransactionsGetByAccountIDResponse](&transactionsv1.TransactionsGetByAccountIDResponse{Transactions: transactions, Total: total}), nil
 }
