@@ -93,6 +93,10 @@ docker-serve:
 docker-stop:
 	docker compose stop
 
+.PHONY: docker-stop-api
+docker-stop-api:
+	docker compose --profile api stop
+
 .PHONY: docker-reset
 docker-reset: docker-down docker-serve
 
