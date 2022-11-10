@@ -120,10 +120,28 @@ message GetBalanceResponse {
   string balance = 1;
 }
 
+message TransactionGetByIDRequest {
+  string transaction_id = 1;
+}
+
+message TransactionGetByIDResponse {
+  CompletedTransfer transaction = 1;
+}
+
+message TransactionsGetByAccountIDRequest {
+  string account_id = 1;
+}
+
+message TransactionsGetByAccountIDResponse {
+  repeated CompletedTransfer transactions = 1;
+}
+
 service Accounts {
   rpc AccountGetViaUser(AccountGetViaUserRequest) returns (AccountGetViaUserResponse);
   rpc AccountsUser(AccountsUserRequest) returns (AccountsUserResponse);
   rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc TransactionGetByID(TransactionGetByIDRequest) returns (TransactionGetByIDResponse);
+  rpc TransactionsGetByAccountID(TransactionsGetByAccountIDRequest) returns (TransactionsGetByAccountIDResponse);
 }
 
 message TransactWithIDRequest {

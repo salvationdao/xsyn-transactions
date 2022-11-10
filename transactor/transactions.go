@@ -183,3 +183,22 @@ func (t *Transactor) Close() {
 	}
 	wg.Wait()
 }
+
+func (t *Transactor) TransactionGetByID(ctx context.Context, req *connect.Request[transactionsv1.TransactionGetByIDRequest]) (*connect.Response[transactionsv1.TransactionGetByIDResponse], error) {
+	transaction, err := t.Storage.TransactionGetByID(req.Msg.TransactionId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse[transactionsv1.TransactionGetByIDResponse](&transactionsv1.TransactionGetByIDResponse{Transaction: transaction}), nil
+
+}
+
+func (t *Transactor) TransactionsGetByAccountID(ctx context.Context, req *connect.Request[transactionsv1.TransactionsGetByAccountIDRequest]) (*connect.Response[transactionsv1.TransactionsGetByAccountIDResponse], error) {
+	transactions, err := t.Storage.TransactionsGetByAccountID(req.Msg.AccountId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse[transactionsv1.TransactionsGetByAccountIDResponse](&transactionsv1.TransactionsGetByAccountIDResponse{Transactions: transactions}), nil
+}

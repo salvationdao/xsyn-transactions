@@ -89,6 +89,10 @@ docker-stop-dev:
 docker-serve:
 	docker compose --profile serve up -d
 
+.PHONY: docker-stop
+docker-stop:
+	docker compose stop
+
 .PHONY: docker-reset
 docker-reset: docker-down docker-serve
 

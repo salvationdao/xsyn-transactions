@@ -32,6 +32,8 @@ type AccountsClient interface {
 	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error)
 	AccountsUser(context.Context, *connect_go.Request[v1.AccountsUserRequest]) (*connect_go.Response[v1.AccountsUserResponse], error)
 	GetBalance(context.Context, *connect_go.Request[v1.GetBalanceRequest]) (*connect_go.Response[v1.GetBalanceResponse], error)
+	TransactionGetByID(context.Context, *connect_go.Request[v1.TransactionGetByIDRequest]) (*connect_go.Response[v1.TransactionGetByIDResponse], error)
+	TransactionsGetByAccountID(context.Context, *connect_go.Request[v1.TransactionsGetByAccountIDRequest]) (*connect_go.Response[v1.TransactionsGetByAccountIDResponse], error)
 }
 
 // NewAccountsClient constructs a client for the transactions.v1.Accounts service. By default, it
@@ -59,14 +61,26 @@ func NewAccountsClient(httpClient connect_go.HTTPClient, baseURL string, opts ..
 			baseURL+"/transactions.v1.Accounts/GetBalance",
 			opts...,
 		),
+		transactionGetByID: connect_go.NewClient[v1.TransactionGetByIDRequest, v1.TransactionGetByIDResponse](
+			httpClient,
+			baseURL+"/transactions.v1.Accounts/TransactionGetByID",
+			opts...,
+		),
+		transactionsGetByAccountID: connect_go.NewClient[v1.TransactionsGetByAccountIDRequest, v1.TransactionsGetByAccountIDResponse](
+			httpClient,
+			baseURL+"/transactions.v1.Accounts/TransactionsGetByAccountID",
+			opts...,
+		),
 	}
 }
 
 // accountsClient implements AccountsClient.
 type accountsClient struct {
-	accountGetViaUser *connect_go.Client[v1.AccountGetViaUserRequest, v1.AccountGetViaUserResponse]
-	accountsUser      *connect_go.Client[v1.AccountsUserRequest, v1.AccountsUserResponse]
-	getBalance        *connect_go.Client[v1.GetBalanceRequest, v1.GetBalanceResponse]
+	accountGetViaUser          *connect_go.Client[v1.AccountGetViaUserRequest, v1.AccountGetViaUserResponse]
+	accountsUser               *connect_go.Client[v1.AccountsUserRequest, v1.AccountsUserResponse]
+	getBalance                 *connect_go.Client[v1.GetBalanceRequest, v1.GetBalanceResponse]
+	transactionGetByID         *connect_go.Client[v1.TransactionGetByIDRequest, v1.TransactionGetByIDResponse]
+	transactionsGetByAccountID *connect_go.Client[v1.TransactionsGetByAccountIDRequest, v1.TransactionsGetByAccountIDResponse]
 }
 
 // AccountGetViaUser calls transactions.v1.Accounts.AccountGetViaUser.
@@ -84,11 +98,23 @@ func (c *accountsClient) GetBalance(ctx context.Context, req *connect_go.Request
 	return c.getBalance.CallUnary(ctx, req)
 }
 
+// TransactionGetByID calls transactions.v1.Accounts.TransactionGetByID.
+func (c *accountsClient) TransactionGetByID(ctx context.Context, req *connect_go.Request[v1.TransactionGetByIDRequest]) (*connect_go.Response[v1.TransactionGetByIDResponse], error) {
+	return c.transactionGetByID.CallUnary(ctx, req)
+}
+
+// TransactionsGetByAccountID calls transactions.v1.Accounts.TransactionsGetByAccountID.
+func (c *accountsClient) TransactionsGetByAccountID(ctx context.Context, req *connect_go.Request[v1.TransactionsGetByAccountIDRequest]) (*connect_go.Response[v1.TransactionsGetByAccountIDResponse], error) {
+	return c.transactionsGetByAccountID.CallUnary(ctx, req)
+}
+
 // AccountsHandler is an implementation of the transactions.v1.Accounts service.
 type AccountsHandler interface {
 	AccountGetViaUser(context.Context, *connect_go.Request[v1.AccountGetViaUserRequest]) (*connect_go.Response[v1.AccountGetViaUserResponse], error)
 	AccountsUser(context.Context, *connect_go.Request[v1.AccountsUserRequest]) (*connect_go.Response[v1.AccountsUserResponse], error)
 	GetBalance(context.Context, *connect_go.Request[v1.GetBalanceRequest]) (*connect_go.Response[v1.GetBalanceResponse], error)
+	TransactionGetByID(context.Context, *connect_go.Request[v1.TransactionGetByIDRequest]) (*connect_go.Response[v1.TransactionGetByIDResponse], error)
+	TransactionsGetByAccountID(context.Context, *connect_go.Request[v1.TransactionsGetByAccountIDRequest]) (*connect_go.Response[v1.TransactionsGetByAccountIDResponse], error)
 }
 
 // NewAccountsHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -113,6 +139,16 @@ func NewAccountsHandler(svc AccountsHandler, opts ...connect_go.HandlerOption) (
 		svc.GetBalance,
 		opts...,
 	))
+	mux.Handle("/transactions.v1.Accounts/TransactionGetByID", connect_go.NewUnaryHandler(
+		"/transactions.v1.Accounts/TransactionGetByID",
+		svc.TransactionGetByID,
+		opts...,
+	))
+	mux.Handle("/transactions.v1.Accounts/TransactionsGetByAccountID", connect_go.NewUnaryHandler(
+		"/transactions.v1.Accounts/TransactionsGetByAccountID",
+		svc.TransactionsGetByAccountID,
+		opts...,
+	))
 	return "/transactions.v1.Accounts/", mux
 }
 
@@ -129,6 +165,14 @@ func (UnimplementedAccountsHandler) AccountsUser(context.Context, *connect_go.Re
 
 func (UnimplementedAccountsHandler) GetBalance(context.Context, *connect_go.Request[v1.GetBalanceRequest]) (*connect_go.Response[v1.GetBalanceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.GetBalance is not implemented"))
+}
+
+func (UnimplementedAccountsHandler) TransactionGetByID(context.Context, *connect_go.Request[v1.TransactionGetByIDRequest]) (*connect_go.Response[v1.TransactionGetByIDResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.TransactionGetByID is not implemented"))
+}
+
+func (UnimplementedAccountsHandler) TransactionsGetByAccountID(context.Context, *connect_go.Request[v1.TransactionsGetByAccountIDRequest]) (*connect_go.Response[v1.TransactionsGetByAccountIDResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("transactions.v1.Accounts.TransactionsGetByAccountID is not implemented"))
 }
 
 // TransactorClient is a client for the transactions.v1.Transactor service.
