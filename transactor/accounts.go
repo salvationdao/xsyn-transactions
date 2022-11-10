@@ -72,10 +72,11 @@ func (t *Transactor) AccountsUser(ctx context.Context, req *connect.Request[tran
 					accounts = append(accounts, account)
 					continue
 				}
+				// not having an account with every ledger isn't an error, so we just continue
+				continue
 			}
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
-
 		accounts = append(accounts, account)
 	}
 

@@ -57,7 +57,7 @@ func (t *Transactor) getAndSet(userID string, ledger transactionsv1.Ledger) (*tr
 	}
 
 	for _, account := range accounts {
-		t.userMap[account.UserId][ledger] = account
+		t.userMap[account.UserId][account.Ledger] = account
 	}
 
 	if account, ok := t.userMap[userID][ledger]; ok {
