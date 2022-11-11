@@ -19,7 +19,8 @@ Built on linux with the following dependencies
 * docker compose v2.12.2
 
 Spin-up
-If you are working on this codebase `make init` will initialize the codebase including spinning up the database with migrations and data migration.
+
+If you are working on this codebase `make init` will initialize the codebase including spinning up the database with migrations and data migration (data migratiuon needs to be ran after xsyn-service is up and running).
 If you are not working on the codebase you want to just run `make docker-serve`
 
 Envars
