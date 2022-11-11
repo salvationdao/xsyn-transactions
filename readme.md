@@ -60,7 +60,7 @@ BUF_TOKEN="1pass"
 - `buf push`
   - pushes proto files to registry 
 - https://buf.build/
-
+- TODO: move buf repo to gitlad when ready
 
 Make Commands
 ```bash
