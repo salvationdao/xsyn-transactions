@@ -20,8 +20,9 @@ Built on linux with the following dependencies
 
 Spin-up
 
-If you are working on this codebase `make init` will initialize the codebase including spinning up the database with migrations and data migration (data migratiuon needs to be ran after xsyn-service is up and running).
-If you are not working on the codebase you want to just run `make docker-serve`
+If you are working on this codebase `make init` will initialize the codebase including spinning up the database with migrations and data migration (data migratiuon needs to be ran after passport-db is up and running).
+
+If you are not working on the codebase you want to just run `make docker-serve` and this will run all the needed dockers, for the data-migration to work you will need passport-db up and running.
 
 Envars
 ```sh
