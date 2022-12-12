@@ -1,0 +1,49 @@
+output = "./boiler"
+pkgname = "boiler"
+no-context = true
+no-tests = true
+add-soft-deletes = true
+struct-tag-casing = "snake"
+wipe = true
+tag = ["boiler"]
+
+[psql]
+  dbname = "xsyn-transactions-db"
+  host   = "localhost"
+  port   = 5433
+  user   = "xsyn-transactions-db"
+  pass   = "dev"
+  schema = "public"
+  blacklist = ["migrations", "other"]
+  sslmode = "disable"
+
+# example for join table, so have correct singular/plural
+# [aliases.tables.plans_locations]
+# up_plural = "PlansLocations"
+# up_singular = "PlanLocation"
+# down_plural = "plansLocations"
+# down_singular = "planLocation"
+
+# work with decimal in code and db
+[[types]]
+  [types.match]
+    type = "types.Decimal"
+    nullable = false
+
+  [types.replace]
+    type = "decimal.Decimal"
+
+   [types.imports]
+     third_party = ['"github.com/shopspring/decimal"']
+
+# work with nullable decimal in code and db
+[[types]]
+  [types.match]
+    type = "types.NullDecimal"
+    nullable = true
+
+  [types.replace]
+    type = "decimal.NullDecimal"
+
+   [types.imports]
+     third_party = ['"github.com/shopspring/decimal"']

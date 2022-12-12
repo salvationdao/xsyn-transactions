@@ -1,0 +1,190 @@
+syntax = "proto3";
+
+package transactions.v1;
+
+option go_package = "xsyn-transactions/gen/transactions/v1;transactionsv1";
+
+message Account {
+  string id = 1;
+  string user_id = 2;
+  Ledger ledger = 3;
+  AccountCode code = 4;
+  string debits_posted = 5;
+  string credits_posted = 6;
+  string balance = 8;
+  int64 created_at = 9;
+}
+
+message MigrationTransfer {
+  string id = 1;
+  string credit_user_id = 2;
+  string credit_account_id = 3;
+  string debit_user_id = 4;
+  string debit_account_id = 5;
+  string amount = 6;
+  Ledger ledger = 7;
+  TransferCode code = 8;
+  int64 timestamp = 9;
+}
+
+message CompletedTransfer {
+  string id = 1;
+  string credit_user_id = 2;
+  string credit_account_id = 3;
+  string debit_user_id = 4;
+  string debit_account_id = 5;
+  string amount = 6;
+  Ledger ledger = 7;
+  TransferCode code = 8;
+  int64 timestamp = 9;
+}
+
+enum TransferCode {
+  UnusedTransferCode = 0;
+  Unknown = 1;
+  Legacy = 2;
+  Deposit = 3;
+  DepositRefund = 4;
+  Withdraw = 5;
+  WithdrawRefund = 6;
+  SupsPurchase = 7;
+  SupsPurchaseRefund = 8;
+  StorePurchase = 9;
+  StorePurchaseRefund = 10;
+  AssetTransferFee = 11;
+  AssetTransferFeeRefund = 12;
+  SupremacyStorePurchase = 13;
+  SupremacyStoreRefund = 14;
+  SupremacyMarketplace = 15;
+  SupremacySyndicate = 16;
+  SupremacySyndicateRefund = 17;
+  SupremacyBattle = 18;
+  SupremacyBattleRefund = 19;
+  SupremacyBattleReward = 20;
+  SupremacyBattleLobbyFee = 21;
+  SupremacyBattleLobbyFeeRefund = 22;
+  SupremacyBattleLobbyJoin = 23;
+  SupremacyBattleLobbyJoinRefund = 24;
+  Coupon = 25;
+  SupremacyMarketplaceBuy = 26;
+  SupremacyMarketplaceBuyRefund = 27;
+  SupremacyMarketplaceBid = 28;
+  SupremacyMarketplaceBidRefund = 29;
+  SupremacyRepair = 30;
+  SupremacyRepairRefund = 31;
+  SupremacyNotification = 32;
+  SupremacyNotificationRefund = 33;
+  SupremacyMarketplaceFee = 34;
+  SupremacyMarketplaceFeeRefund = 35;
+}
+
+enum Ledger {
+  UnusedLedgerCode = 0;
+  SUPS = 1;
+}
+
+enum AccountCode {
+  AccountUnknown = 0;
+  AccountReserve = 1;
+  AccountSystem = 2;
+  AccountUser = 3;
+  AccountBot = 4;
+}
+
+message AccountGetViaUserRequest {
+  string user_id = 1;
+  Ledger ledger = 2;
+  bool create_if_not_exists = 3;
+}
+
+message AccountGetViaUserResponse {
+  Account account = 1;
+}
+
+message AccountsUserRequest {
+  string user_id = 1;
+  repeated Ledger create_if_not_exist = 2;
+}
+
+message AccountsUserResponse {
+  repeated  Account accounts = 1;
+}
+
+message GetBalanceRequest {
+  string user_id = 1;
+  Ledger ledger = 2;
+  bool create_if_not_exists = 3;
+}
+
+message GetBalanceResponse {
+  string balance = 1;
+}
+
+message TransactionGetByIDRequest {
+  string transaction_id = 1;
+}
+
+message TransactionGetByIDResponse {
+  CompletedTransfer transaction = 1;
+}
+
+message TransactionsGetByAccountIDRequest {
+  string account_id = 1;
+  int32 offset = 2;
+  int32 page_size = 3;
+  string sort_by = 4;
+  string sort_dir = 5;
+}
+
+message TransactionsGetByAccountIDResponse {
+  int64 total = 1;
+  repeated CompletedTransfer transactions = 2;
+}
+
+service Accounts {
+  rpc AccountGetViaUser(AccountGetViaUserRequest) returns (AccountGetViaUserResponse);
+  rpc AccountsUser(AccountsUserRequest) returns (AccountsUserResponse);
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc TransactionGetByID(TransactionGetByIDRequest) returns (TransactionGetByIDResponse);
+  rpc TransactionsGetByAccountID(TransactionsGetByAccountIDRequest) returns (TransactionsGetByAccountIDResponse);
+}
+
+message TransactWithIDRequest {
+  string credit_user_id = 1;
+  string debit_user_id = 2;
+  TransferCode code = 3;
+  Ledger ledger = 4;
+  string amount = 5;
+  string tx_id = 6;
+}
+
+message TransactWithIDResponse {
+  CompletedTransfer transfer = 1;
+}
+
+message TransactRequest {
+  string credit_user_id = 1;
+  string debit_user_id = 2;
+  TransferCode code = 3;
+  Ledger ledger = 4;
+  string amount = 5;
+}
+
+message TransactResponse {
+  CompletedTransfer transfer = 1;
+}
+
+message TransferCompleteSubscribeRequest {
+  string id = 1;
+}
+
+message TransferCompleteSubscribeResponse {
+  Account account = 1;
+  CompletedTransfer transaction = 2;
+}
+
+service Transactor {
+  rpc TransactWithID(TransactWithIDRequest) returns (TransactWithIDResponse);
+  rpc Transact(TransactRequest) returns (TransactResponse);
+  rpc TransferCompleteSubscribe (TransferCompleteSubscribeRequest) returns (stream TransferCompleteSubscribeResponse) {}
+}

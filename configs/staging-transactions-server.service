@@ -1,0 +1,19 @@
+[Unit]
+Description=staging-transactions-server
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=staging-transactions-server
+Group=staging-transactions-server
+
+WorkingDirectory=/usr/share/staging-transactions-server/staging-transactions-server-online
+EnvironmentFile=/usr/share/staging-transactions-server/staging-transactions-server-online/init/staging-transactions-server.env
+
+ExecStart=/usr/share/staging-transactions-server/staging-transactions-server-online/transactions-server serve
+
+LimitNOFILE=1000000
+
+[Install]
+WantedBy=multi-user.target

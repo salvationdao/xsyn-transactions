@@ -1,0 +1,19 @@
+[Unit]
+Description=transactions-server
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=transactions-server
+Group=transactions-server
+
+WorkingDirectory=/usr/share/transactions-server/transactions-server-online
+EnvironmentFile=/usr/share/transactions-server/transactions-server-online/init/transactions-server.env
+
+ExecStart=/usr/share/transactions-server/transactions-server-online/transactions-server serve
+
+LimitNOFILE=1000000
+
+[Install]
+WantedBy=multi-user.target
