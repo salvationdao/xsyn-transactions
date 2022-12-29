@@ -1,0 +1,18 @@
+Software Salvation DAO Public License (SSDPL)
+Copyright (C) 2022 Salvation DAO LLC
+
+This license extends the GNU General Public License version 3 (GPLv3) and enforces the following additional conditions:
+
+1. Licensees must be members of the Salvation DAO LLC.
+2. Licensees must not remove the NFT implementation or requirement for NFT-backed assets in the software.
+3. Licensees must not change the NFT implementation to use a different smart contract.
+4. Licensees must always allow players to unstake their Supremacy NFTs at all times.
+5. The Salvation DAO has the right to audit in-game native token reserves and holdings at any time.
+
+This license also grants the Salvation DAO the right to enforce these additional conditions through legal action if necessary. By using or distributing this software, you agree to be bound by the terms of this license.
+
+The full text of the GPLv3 can be found at https://www.gnu.org/licenses/gpl-3.0.txt.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GPLv3 for more details.
+
+You should have received a copy of the GPLv3 along with this program. If not, see https://www.gnu.org/licenses/gpl-3.0.txt.
